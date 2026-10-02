@@ -292,7 +292,7 @@ While research is being approved, run or reported (§4.5), `<agent>` is `Researc
 
 The SDD harness was set up as the first SDD task:
 
-1. The Specifier drafts `AGENTS.md`, `CLAUDE.md`, the three agent files and the `docs/sdd/` skeleton.
+1. The Specifier drafts `AGENTS.md`, `CLAUDE.md`, the agent files and the `docs/sdd/` skeleton.
 2. **Stop:** the user approves or requests changes.
 3. The Manager creates `development` from `master`, then the task branch `chore/sdd-bootstrap` from `development`.
 4. The Reviewer verifies the structure against the bootstrap prompt (structure and compliance only: the bootstrap has no testable acceptance criteria, so no tests are written; see `.claude/agents/reviewer.md`) and commits on `chore/sdd-bootstrap` after the user's OK.
