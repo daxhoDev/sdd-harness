@@ -1,6 +1,6 @@
 ---
 name: sdd-init
-description: Install the SDD harness (AGENTS.md, CLAUDE.md, Specifier/Implementer/Reviewer subagents and the docs/sdd/ skeleton) into the current project. Manual use only.
+description: Install the SDD harness (AGENTS.md, CLAUDE.md, Specifier/Implementer/Reviewer/Researcher subagents and the docs/sdd/ skeleton) into the current project. Manual use only.
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ Templates live in `${CLAUDE_SKILL_DIR}`:
 - `core/` — agent-neutral content:
   - `core/AGENTS.md`
   - `core/docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`)
-  - `core/roles/<role>.md` — body of each subagent role (`specifier`, `implementer`, `reviewer`)
+  - `core/roles/<role>.md` — body of each subagent role (`specifier`, `implementer`, `reviewer`, `researcher`)
 - `adapters/claude-code/` — Claude Code adapter:
   - `CLAUDE.md`
   - `agents/<role>.frontmatter.md` — frontmatter of each subagent

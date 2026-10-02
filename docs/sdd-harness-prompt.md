@@ -13,18 +13,19 @@ Set up a Spec Driven Development (SDD) harness for this project, before any deta
 5. **Each agent does only its own job.** No agent ever performs work belonging to another role.
 6. **Each agent receives only the context it needs** to do its job — nothing more.
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
+8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§3.1). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
 
 ---
 
 ## 2. Agents
 
-There are four agents. The **Manager** is the main session (subagents cannot talk to the user directly). **Specifier**, **Implementer** and **Reviewer** are subagents defined in `.claude/agents/`.
+There are five agents. The **Manager** is the main session (subagents cannot talk to the user directly). **Specifier**, **Implementer**, **Reviewer** and **Researcher** are subagents defined in `.claude/agents/`.
 
 ### 2.0 Subagent definition rules
 - Frontmatter: `name`, `description`, `color`, `omitClaudeMd: true` — nothing else.
   - No `tools` field: subagents inherit every tool of the session.
   - No `model` field: subagents inherit the session's model.
-  - Colors: Specifier `blue`, Implementer `green`, Reviewer `orange`.
+  - Colors: Specifier `blue`, Implementer `green`, Reviewer `orange`, Researcher `purple`.
 - `description` states the agent is used **only when the Manager explicitly hands off a task in the SDD workflow** — never auto-delegated.
 - `omitClaudeMd: true` enforces minimal context: each agent file is self-contained (role, permissions, workflow steps, report format), and the agent reads only what it is pointed to.
 - Permissions are enforced **by instructions only** (no hooks).
@@ -32,12 +33,17 @@ There are four agents. The **Manager** is the main session (subagents cannot tal
   - Specifier: a numbered decision list (context, options, recommendation), or the files written plus reading instructions for the Implementer.
   - Implementer: a list of blocking issues, or the files changed plus notes.
   - Reviewer: test results, compliance findings (exactly two categories: implementation gap / spec gap; convention non-compliance is an implementation gap) and a verdict.
+  - Researcher: Research report (Question researched; Confirmed, with official-source URL; UNCONFIRMED; Contradictions between sources; Date consulted; Open questions).
+  - The blocking reports of the Specifier (Decisions), Implementer (Blocked) and Reviewer (Review, verdict `BLOCKED`) have an optional `### Research requests` section (§3.1).
 
 ### 2.1 Manager
 - The only agent that talks to the user, and the only channel between agents.
 - Receives the user's input and asks questions to refine it until it is clear, then passes it to the Specifier.
 - Relays the Specifier's doubts, contradictions and pending decisions to the user, explained in full so the user can make the relevant decisions.
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
+- Never researches itself (golden rule 8). It may request research while refining the user's input, and it handles research requests from the other agents (§3.1).
+- **Always** asks the user (what and why) before launching any research; if the user declines, puts to the user the question the research was meant to answer.
+- Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it.
 - Creates the task branch from `development` once the user approves the specs, before handing off to the Implementer.
 - Always reports the current position in the cycle (see §6).
 - Never writes specs, code, tests or docs, and never commits.
@@ -72,6 +78,14 @@ There are four agents. The **Manager** is the main session (subagents cannot tal
 - Reports results to the Manager.
 - After the user's OK closing a phase/task (and the Specifier's doc update), commits code + tests + docs together on the task branch.
 - Permissions: writes tests only; otherwise does not modify code or docs.
+
+### 2.5 Researcher
+- Used only when research is necessary, and only after the user's approval (§3.1).
+- Receives only the question, the why and the scope; reads repo files only if the Manager names them.
+- Searches the internet, reads online docs and queries external APIs. Read-only fetch commands (e.g. `curl` GET) are allowed; credentials only if the user provides them for that research; never changes state on external systems.
+- **Official source** = the owner/maintainer of the subject (vendor docs, the project's own repo/docs, standards bodies, the API provider's reference). Everything else goes to UNCONFIRMED, with its URL.
+- Never makes decisions, recommendations or options.
+- Permissions: writes no files anywhere (not even through a shell); no commits, branches or pushes.
 
 ---
 
@@ -115,6 +129,34 @@ User ──► Manager (refine: questions to the user, one at a time)
             ▼
          Reviewer commits code + tests + docs on the task branch ──► next phase (if any)
 ```
+
+### 3.1 Research requests
+
+Research can be requested at any point: by a subagent (always blocking — it stops and adds the request to the `### Research requests` section of its blocking report, as `- <n>. Question: … · Why: … · Scope: …`) or by the Manager while refining the user's input.
+
+```
+Requester (Specifier | Implementer | Reviewer | Manager)
+            │  research request (question · why · scope)
+            ▼
+         Manager ──► User: what will be researched and why
+            │  ■ user approves? (mandatory, nothing is launched without it)
+            │  declined? ──► Manager ──► User: the question the research was meant to answer
+            │                (one at a time, with options) ──► Requester receives the user's answer
+            ▼
+         Researcher (question · why · scope only) ──► Research report
+            │
+            ▼
+         Manager ──► User: summary of the report
+            │
+            ▼
+         Requester receives the full report (loop if more research is needed)
+```
+
+- The approval before research is mandatory but is **not** a numbered approval stop; it can happen at any point.
+- The full report goes **only** to the requester; the user sees a summary.
+- When the Manager is the requester, it uses the report only to ask the user better-informed questions.
+- Findings never enter the docs directly: the Specifier turns them into options, and only the option the user chooses is written. Specs do not record source URLs.
+- A mid-implementation research need must be avoided, but if it arises it is handled like any other mid-implementation blocker.
 
 ---
 
@@ -189,7 +231,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 ## 6. Interaction with the user
 
 - **Questions: one at a time, with options.** If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice.
-- **Status line:** every Manager message starts with `<task> · Phase <n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`.
+- **Status line:** every Manager message starts with `<task> · Phase <n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`. During research, `<agent>` is `Researcher`; the task name is unchanged and the iteration keeps the requesting step's count.
 - Approval stops are mandatory: (1) after the Specifier's pass, before implementation; (2) after review, before closing a phase/task.
 
 ---
@@ -212,7 +254,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 ## 9. Bootstrap (what to do now)
 
 Treat the bootstrap as the first SDD task:
-1. **Specifier** drafts `AGENTS.md`, `CLAUDE.md`, `.claude/agents/specifier.md`, `.claude/agents/implementer.md`, `.claude/agents/reviewer.md`, and the `docs/sdd/` skeleton (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`), following the rules above.
+1. **Specifier** drafts `AGENTS.md`, `CLAUDE.md`, `.claude/agents/specifier.md`, `.claude/agents/implementer.md`, `.claude/agents/reviewer.md`, `.claude/agents/researcher.md`, and the `docs/sdd/` skeleton (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`), following the rules above.
    - No spec is written for the harness itself (`AGENTS.md` is its definition).
    - The CHANGELOG gets one entry, "SDD harness bootstrapped", referencing `AGENTS.md` and the skeleton.
 2. **Stop** — the user approves or requests changes.

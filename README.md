@@ -2,12 +2,13 @@
 
 A Claude Code plugin that installs a **Spec Driven Development (SDD)** harness into any project, through the manual-only skill `sdd-init`.
 
-The harness defines four roles:
+The harness defines five roles:
 
 - **Manager** — the main session; the only one that talks to the user.
 - **Specifier** — checks feasibility, raises every decision to the user, and writes all documentation.
 - **Implementer** — implements exactly what is documented.
 - **Reviewer** — writes and runs tests from acceptance criteria, reviews compliance, and commits after the user's OK.
+- **Researcher** — the only role that searches the internet or consults external APIs, only when needed and after the user's approval; returns a sourced report and writes no files.
 
 Docs are the single source of truth, and agents never make decisions on their own. The full rules are in [`docs/sdd-harness-prompt.md`](docs/sdd-harness-prompt.md) and in the installed `AGENTS.md`.
 
@@ -32,7 +33,7 @@ The skill only copies files:
 
 - `AGENTS.md`
 - `CLAUDE.md`
-- `.claude/agents/{specifier,implementer,reviewer}.md`
+- `.claude/agents/{specifier,implementer,reviewer,researcher}.md`
 - `docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`)
 
 It creates no branches and makes no commits. If the project is not a git repository, or any target file already exists, it stops and asks you what to do.

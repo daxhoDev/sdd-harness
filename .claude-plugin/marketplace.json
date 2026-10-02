@@ -4,13 +4,13 @@
     "name": "daxhoDev"
   },
   "metadata": {
-    "description": "Spec Driven Development harness: installs a four-role SDD workflow into a project."
+    "description": "Spec Driven Development harness: installs a five-role SDD workflow into a project."
   },
   "plugins": [
     {
       "name": "sdd-harness",
       "source": "./",
-      "description": "Spec Driven Development harness: installs a four-role SDD workflow into a project."
+      "description": "Spec Driven Development harness: installs a five-role SDD workflow into a project."
     }
   ]
 }

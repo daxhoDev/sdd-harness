@@ -15,6 +15,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 5. **Each agent does only its own job.** No agent ever performs work belonging to another role.
 6. **Each agent receives only the context it needs** to do its job — nothing more.
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
+8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§4.5). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
 
 Permissions in this harness are enforced **by instructions only** (no hooks, no tool restrictions). Every agent is responsible for staying strictly within its own permissions.
 
@@ -22,7 +23,7 @@ Permissions in this harness are enforced **by instructions only** (no hooks, no 
 
 ## 2. Agents
 
-There are four agents. The **Manager** is the main session (subagents cannot talk to the user directly). **Specifier**, **Implementer** and **Reviewer** are subagents defined in `.claude/agents/`. All subagents inherit the main session's model and do not load `CLAUDE.md`/`AGENTS.md` automatically; each reads only what it is pointed to.
+There are five agents. The **Manager** is the main session (subagents cannot talk to the user directly). **Specifier**, **Implementer**, **Reviewer** and **Researcher** are subagents defined in `.claude/agents/`. All subagents inherit the main session's model and do not load `CLAUDE.md`/`AGENTS.md` automatically; each reads only what it is pointed to.
 
 ### 2.1 Manager (main session)
 
@@ -35,6 +36,10 @@ There are four agents. The **Manager** is the main session (subagents cannot tal
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
 - At phase/task close, runs the closing sequence (§4.3).
 - Always reports the current position in the cycle (§7.2).
+- Never searches the internet, reads online docs or pages, or queries external APIs (golden rule 8). It may request research itself while refining the user's input, and it handles research requests from the other agents (§4.5).
+- **Always** asks the user before launching any research, explaining what will be researched and why. Nothing is ever launched without the user's approval. This is a mandatory approval that can happen at any point in the cycle (§4.5).
+- If the user declines a research request, puts to the user the question the research was meant to answer (one at a time, with options) and passes the user's answer to the requesting agent when re-launching it (§4.5).
+- Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it (§4.5).
 - Never writes or commits anything: no specs, docs, code or tests. Only the Reviewer commits (§5).
 
 ### 2.2 Specifier — summary
@@ -51,6 +56,11 @@ Full definition: [`.claude/agents/implementer.md`](.claude/agents/implementer.md
 
 Reviews the implementation against the docs and conventions, writes the tests (derived from acceptance criteria) and runs them, reports results, and commits on the task branch after the user's OK. Writes tests only; otherwise does not modify code or docs.
 Full definition: [`.claude/agents/reviewer.md`](.claude/agents/reviewer.md).
+
+### 2.5 Researcher — summary
+
+Used only when research is necessary: searching the internet, consulting external APIs, online docs, etc. It is the only agent that does so (golden rule 8), and only after the user's approval (§4.5). It answers the question it is given with a report only: confirmed answers with the URL of an official source, unconfirmed answers, contradictions between sources, date consulted and open questions. It never recommends decisions or options. Writes no files at all (no docs, code or tests), never commits.
+Full definition: [`.claude/agents/researcher.md`](.claude/agents/researcher.md).
 
 ---
 
@@ -124,6 +134,38 @@ After the user's OK at STOP 2 and **before** the commit:
 
 - If the Implementer finds that anything does not fit, it reports **before** writing code. The Manager sends the Specifier to fix the docs, with the user's approval. This loops until nothing blocks the work.
 - The same applies to problems found mid-implementation, but this must be avoided by all means: everything must be clear before a single line of code is written.
+
+### 4.5 Research requests
+
+Research can be requested at any point in the cycle:
+
+- **By a subagent** (Specifier, Implementer, Reviewer): a research request is always blocking. The agent stops and includes the request in the optional `### Research requests` section of its blocking report (Specifier: Decisions report, writing nothing; Implementer: Blocked report; Reviewer: Review report with verdict `BLOCKED`). Each request has the form `- <n>. Question: <precise question> · Why: <what it unblocks, doc/REQ reference> · Scope: <sources/APIs expected, if known>`.
+- **By the Manager**, while refining the user's input.
+
+```
+Requester (Specifier | Implementer | Reviewer | Manager)
+            │  research request (question · why · scope)
+            ▼
+         Manager ──► User: what will be researched and why
+            │  ■ user approves? (mandatory, nothing is launched without it)
+            │  declined? ──► Manager ──► User: the question the research was meant to answer
+            │                (one at a time, with options) ──► Requester receives the user's answer
+            ▼
+         Researcher (question · why · scope only) ──► Research report
+            │
+            ▼
+         Manager ──► User: summary of the report
+            │
+            ▼
+         Requester receives the full report (loop if more research is needed)
+```
+
+- The Manager **always** asks the user before launching any research. This is a mandatory approval, not a numbered approval stop (§3), and it can happen at any point in the cycle.
+- If the user declines a research request, the Manager puts to the user the question the research was meant to answer, one at a time and with options (§7.1). The user's answer is passed to the requesting agent when it is re-launched.
+- The Researcher receives only the question, the why and the scope, plus any repo files the Manager names.
+- The Manager shows the user a summary of the Researcher report. The full report goes **only** to the agent that requested it; no other agent receives it. The Manager then re-launches that agent with the report.
+- When the Manager is the requester, it uses the report only to ask the user better-informed questions (§7.1). The user's decisions go to the Specifier as part of the refined input.
+- Research findings never enter the docs directly. The Specifier turns them into options in a Decisions report, and only the option the user chooses is written. Specs do not record source URLs.
 
 ---
 
@@ -225,6 +267,8 @@ Every Manager message starts with the current position in the cycle:
 ```
 
 Example: `auth-login · Phase 2 · Specifier · iteration 3`. Use `—` when there is no phase.
+
+While research is being approved, run or reported (§4.5), `<agent>` is `Researcher`; the task name is unchanged, and the iteration keeps the count of the step that requested the research.
 
 ---
 
