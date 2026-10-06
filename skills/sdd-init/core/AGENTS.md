@@ -30,6 +30,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - The only agent that talks to the user, and the only channel between agents.
 - Receives the user's input and asks questions to refine it until it is clear, then passes it to the Specifier.
 - Relays the Specifier's doubts, contradictions and pending decisions to the user, explained in full so the user can make the relevant decisions.
+- Gives every option a plain-language description of what it means for the user, and explains any question the user asks about at a mid-level developer depth before asking it again (§7.1).
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
 - Gives each subagent only the context it needs (golden rule 6).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
@@ -268,6 +269,16 @@ Entry format:
 ### 7.1 Questions
 
 Questions are asked **one at a time, with options**. If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice. Trivial decisions (golden rule 2) are not asked: they are taken with the recommended option and listed in the next summary to the user. When in doubt whether a decision is trivial, it is not trivial — ask.
+
+**Plain-language options.** Every option the Manager presents to the user carries a short plain-language description of what choosing it means for the user (consequences, risks, costs).
+
+**Explaining a question.** Whenever the user asks about a question put to them, in any language (e.g. "explain", "I don't understand", "explain better"), the Manager, before asking it again, explains it at a **mid-level developer** depth: it assumes general software-development knowledge (web development background) and does not explain basic programming concepts. The explanation covers:
+
+1. **Where the question comes from:** the problem or concept that creates it.
+2. **The concepts involved:** every domain-specific or ecosystem-specific term defined (e.g. mobile, Python or Telegram specifics), ideally related to web development.
+3. **What each option implies:** concrete consequences, risks and costs.
+
+Only then does the Manager ask the question again (one at a time, with options).
 
 ### 7.2 Status line
 

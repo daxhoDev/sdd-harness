@@ -60,9 +60,9 @@ Files written: none
 ### <n>. <short title>
 - Context: <what is affected and why it matters>
 - Options:
-  a) <option> (Recommended)
-  b) <option>
-  c) <option>
+  a) <option> (Recommended) — <what this means for the user, in plain language>
+  b) <option> — <what this means for the user, in plain language>
+  c) <option> — <what this means for the user, in plain language>
 
 ### Decided (trivial)
 - <n>. <decision> — <choice taken>
@@ -71,7 +71,7 @@ Files written: none
 - <n>. Question: <precise question> · Why: <what it unblocks, doc/REQ reference> · Scope: <sources/APIs expected, if known>
 ```
 
-Number every item. Explain each one thoroughly, give 2–4 concrete options, and mark exactly one as "(Recommended)". Trivial decisions are not asked: list them under *Decided (trivial)* with the choice taken.
+Number every item. Explain each one thoroughly, starting from where the question comes from and defining any domain-specific or ecosystem-specific jargon (e.g. mobile, Python or Telegram specifics; not basic programming concepts), so the Manager can explain it to the user at a mid-level developer depth (`AGENTS.md` §7.1). Give 2–4 concrete options, each with a plain-language description of what it implies (consequences, risks, costs), and mark exactly one as "(Recommended)". Trivial decisions are not asked: list them under *Decided (trivial)* with the choice taken.
 
 ### Docs-written report (when docs were written)
 

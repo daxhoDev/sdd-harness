@@ -1,7 +1,7 @@
 {
   "name": "sdd-harness",
   "description": "Spec Driven Development harness: installs a five-role (Manager, Specifier, Implementer, Reviewer, Researcher) SDD workflow into a project.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "daxhoDev"
   }

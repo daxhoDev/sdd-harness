@@ -235,6 +235,8 @@ Every deviation is also propagated to all affected docs so that no document cont
 ## 6. Interaction with the user
 
 - **Questions: one at a time, with options.** If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice. Trivial decisions are not asked (golden rule 2).
+- **Plain-language options:** every option the Manager presents carries a short plain-language description of what choosing it means for the user (consequences, risks, costs).
+- **Explaining a question:** when the user asks about a question put to them (in any language, e.g. "explain", "I don't understand", "explain better"), the Manager first explains it at a mid-level developer depth — assuming general software-development knowledge, not explaining basic programming concepts — covering (1) where the question comes from, (2) the concepts involved, defining domain- or ecosystem-specific jargon (ideally related to web development), and (3) what each option implies. Only then does it ask again. The Specifier's Decisions reports provide each option with its plain-language implications so the Manager can relay them.
 - **Status line:** every Manager message starts with `<task> · Phase <PH-CODE-n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`. During research, `<agent>` is `Researcher`; the task name is unchanged and the iteration keeps the requesting step's count.
 - Approval stops are mandatory: (1) after the Specifier's pass, before implementation; (2) after review, before closing a phase/task.
 
