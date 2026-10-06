@@ -14,7 +14,7 @@ Templates live in `${CLAUDE_SKILL_DIR}`:
 
 - `core/` — agent-neutral content:
   - `core/AGENTS.md`
-  - `core/docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`)
+  - `core/docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`)
   - `core/roles/<role>.md` — body of each subagent role (`specifier`, `implementer`, `reviewer`, `researcher`)
 - `adapters/claude-code/` — Claude Code adapter:
   - `CLAUDE.md`
@@ -28,7 +28,7 @@ Templates live in `${CLAUDE_SKILL_DIR}`:
 | `CLAUDE.md` | `adapters/claude-code/CLAUDE.md` |
 | `.claude/agents/<role>.md` | `adapters/claude-code/agents/<role>.frontmatter.md` immediately followed by `core/roles/<role>.md` (concatenated, byte for byte) |
 | `docs/sdd/MAIN.md`, `CONVENTIONS.md`, `DEVIATIONS.md` | `core/docs/sdd/` |
-| `docs/sdd/specs/_TEMPLATE.md` | `core/docs/sdd/specs/_TEMPLATE.md` |
+| `docs/sdd/_TEMPLATE.md` | `core/docs/sdd/_TEMPLATE.md` |
 | `docs/sdd/CHANGELOG.md` | `core/docs/sdd/CHANGELOG.md`, replacing `{{DATE}}` with today's date (`YYYY-MM-DD`) and `{{VERSION}}` with the `version` in `${CLAUDE_SKILL_DIR}/../../.claude-plugin/plugin.json` |
 
 No other placeholder exists; every other file is copied unchanged.

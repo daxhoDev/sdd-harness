@@ -34,7 +34,7 @@ The skill only copies files:
 - `AGENTS.md`
 - `CLAUDE.md`
 - `.claude/agents/{specifier,implementer,reviewer,researcher}.md`
-- `docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`)
+- `docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`)
 
 It creates no branches and makes no commits. If the project is not a git repository, or any target file already exists, it stops and asks you what to do.
 

@@ -8,13 +8,18 @@ Process rules (workflow, agents, git, documentation rules): [AGENTS.md](../../AG
 
 TBD — decided by the user.
 
-## Index
+## Process docs
 
-| Document | Type | Code | Version | Status |
+| Document | Purpose | Version |
+|---|---|---|
+| [CONVENTIONS.md](CONVENTIONS.md) | Project-wide conventions (stack, style, structure, testing, dependencies) | v0.1 |
+| [CHANGELOG.md](CHANGELOG.md) | Change history, references only | — |
+| [DEVIATIONS.md](DEVIATIONS.md) | Record of user decisions that contradict approved specs | — |
+| [_TEMPLATE.md](_TEMPLATE.md) | Spec module template (template, not a module) | — |
+
+## Modules
+
+| Document | Code | Purpose | Version | Status |
 |---|---|---|---|---|
-| [CONVENTIONS.md](CONVENTIONS.md) | Process | — | v0.1 | — |
-| [CHANGELOG.md](CHANGELOG.md) | Process | — | — | — |
-| [DEVIATIONS.md](DEVIATIONS.md) | Process | — | — | — |
-| [specs/_TEMPLATE.md](specs/_TEMPLATE.md) | Template, not a module | — | — | — |
 
-<!-- Spec modules are added as rows: | [specs/<module>.md](specs/<module>.md) | Spec module | <CODE> | vX.Y | Draft/Approved | -->
+<!-- Modules are added as rows: | [<NAME>.md](<NAME>.md) | <CODE> | <approved purpose> | vX.Y | Draft/Approved | -->

@@ -9,7 +9,7 @@ Entry template:
 
 ### DEV-NNN — <title>
 - **Date:** YYYY-MM-DD
-- **Spec said:** <what the approved spec said: spec file, REQ-IDs and previous version>
+- **Spec said:** <what the approved spec said: spec file (relative to `docs/sdd/`), REQ-IDs and previous version, e.g. AUTH.md, REQ-AUTH-002, v1.1>
 - **User decided:** <the decision>
 - **Reason:** <reason>
 - **Affected files:** <list>

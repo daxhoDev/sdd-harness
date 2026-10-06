@@ -9,7 +9,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 ## 1. Golden rules
 
 1. **Docs are the single source of truth.** They always take precedence over code; code must comply with them. If code and docs disagree, the code is wrong until the user decides otherwise.
-2. **Never make a decision on your own — not even the smallest one.** Every decision is the user's. Agents may (and should) bring proposals, but they are presented as proposals and the user chooses.
+2. **Never make a non-trivial decision on your own.** Every decision that affects the product, scope, architecture, stack, cost, security or the workflow itself is the user's. Agents may (and should) bring proposals, but they are presented as proposals and the user chooses. **Trivial decisions** are form details only: ID formats, naming, formatting, where a section lives, wording. The agent takes them itself, always with the option it would recommend, and lists them in its next report (the Manager: in its next summary to the user). When in doubt whether a decision is trivial, it is not trivial — ask.
 3. **Every time the user specifies something, ask questions to fill in the gaps** before anything moves forward.
 4. **Docs never contradict each other.** Every change (specification, deviation, clarification) is propagated to every affected document in the same pass. This includes `AGENTS.md`, `CLAUDE.md` and `.claude/agents/*.md`.
 5. **Each agent does only its own job.** No agent ever performs work belonging to another role.
@@ -44,7 +44,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 
 ### 2.2 Specifier — summary
 
-Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever. Never writes code or tests.
+Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever. Never writes code or tests.
 Full definition: [`.claude/agents/specifier.md`](.claude/agents/specifier.md).
 
 ### 2.3 Implementer — summary
@@ -192,26 +192,37 @@ docs/sdd/
 ├── CONVENTIONS.md    # Project conventions (stack, style, structure, testing, etc.)
 ├── CHANGELOG.md      # Change history — references only
 ├── DEVIATIONS.md     # Historical record of user-mandated deviations
-└── specs/
-    ├── _TEMPLATE.md  # Spec module template (a template, not a module)
-    └── <module>.md   # One file per module
+├── _TEMPLATE.md      # Spec module template (a template, not a module)
+└── <NAME>.md         # Spec modules: one file per module
 ```
 
-Every doc in `docs/sdd/` except `MAIN.md` starts with a back-link line: `← Back to [MAIN](<relative path>/MAIN.md)`. `MAIN.md` itself has no back-link.
+- **Process docs** are the fixed set `MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md` and `_TEMPLATE.md`. Every other `.md` file in `docs/sdd/` is a **spec module** (also called a "spec").
+- **Module file names:** `<NAME>.md` in uppercase English; one word preferred, multi-word names joined with `_` (e.g. `ARCHITECTURE.md`, `PUSH_DELIVERY.md`).
+- **New files:** which files exist is decided by the user. The Specifier proposes every new file in `docs/sdd/` (module or process doc) as an item of a Decisions report, stating its name, module code (for a module), purpose and reason; the file is created only after the user approves it. The same applies to renaming, merging or splitting files.
+
+Every doc in `docs/sdd/` except `MAIN.md` starts with a back-link line: `← Back to [MAIN](MAIN.md)`. `MAIN.md` itself has no back-link.
 
 ### 6.2 MAIN.md
 
-Central index. Contains a project overview, an index table of every process doc and spec module (with module code, version and status), and a link to this file. Every doc is listed in `MAIN.md` and links back to it; `MAIN.md` itself has no back-link (§6.1). `specs/_TEMPLATE.md` is listed as "template, not a module".
+Central index. Contains a project overview, a link to this file, and two index tables:
 
-### 6.3 Spec modules (`docs/sdd/specs/<module>.md`)
+- **Process docs:** Document | Purpose | Version. `_TEMPLATE.md` is listed as "template, not a module".
+- **Modules:** Document | Code | Purpose | Version | Status. The Purpose is the one-line purpose the user approved for the file (§6.1).
 
-Every spec follows `docs/sdd/specs/_TEMPLATE.md`:
+Every doc is listed in `MAIN.md` and links back to it; `MAIN.md` itself has no back-link (§6.1).
 
-- **Header:** back-link to MAIN, Module, Version, Status (`Draft` | `Approved`), Last updated (`YYYY-MM-DD`).
+### 6.3 Spec modules (`docs/sdd/<NAME>.md`)
+
+Each spec module holds all the information about its module. Every spec module follows `docs/sdd/_TEMPLATE.md`:
+
+- **Header:** back-link to MAIN, Module, Module code, Version, Status (`Draft` | `Approved`), Last updated (`YYYY-MM-DD`).
 - **Module code:** 2–6 uppercase letters, unique per module, listed in `MAIN.md`.
+- **Description** (required): what the module covers.
 - **Requirements** with stable IDs `REQ-<CODE>-NNN` (e.g. `REQ-AUTH-001`).
 - **Acceptance criteria** for every requirement, IDs `AC-<CODE>-NNN-k` (e.g. `AC-AUTH-001-2`), written as Given/When/Then. They must be testable: the Reviewer derives tests from them.
-- **Implementation phases** `PH-<n>`, each with a status (`Planned` | `In progress` | `In review` | `Done`) and the REQ-IDs it covers.
+- **Implementation phases** `PH-<CODE>-<n>` (e.g. `PH-AUTH-2`), each with a status (`Planned` | `In progress` | `In review` | `Done`) and the REQ-IDs it covers. A phase may also list REQ-IDs of other modules that it covers.
+- **Descriptive modules** (e.g. architecture), which have no requirements or phases of their own, write "None" in those sections. They are versioned and approved like any other module.
+- **Draft-only sections:** a Draft note under the header, an optional **Decided so far** section (decided items kept as prose until requirements and acceptance criteria are written), and an **Open points** section (what is still undecided). They are allowed only while the module is `Draft`. Before approval, Decided so far is converted into requirements and acceptance criteria and removed, Open points must be empty or removed, and the Draft note is removed.
 
 **Versioning (specs):**
 
@@ -228,10 +239,10 @@ Project-wide conventions, filled in as the user decides them. It is the only non
 
 [Keep a Changelog](https://keepachangelog.com/) format: an `## [Unreleased]` section using the standard categories (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`). Following Keep a Changelog practice, only categories that have entries are shown. Release headings are added once the user defines releases.
 
-Each entry is one line holding **references only**, with no duplicated content: date, affected spec(s) with their new version, task/phase, and any related deviation ID. Example:
+Each entry is one line holding **references only**, with no duplicated content: date, affected spec(s) (file name relative to `docs/sdd/`) with their new version, task/phase, and any related deviation ID. Example:
 
 ```
-- 2026-10-02 · specs/auth.md → v1.1 · task auth-login / PH-2 · DEV-003
+- 2026-10-02 · AUTH.md → v1.1 · task auth-login / PH-AUTH-2 · DEV-003
 ```
 
 ### 6.6 DEVIATIONS.md
@@ -243,7 +254,7 @@ Entry format:
 ```
 ### DEV-NNN — <title>
 - **Date:** YYYY-MM-DD
-- **Spec said:** <what the approved spec said: spec file, REQ-IDs and previous version>
+- **Spec said:** <what the approved spec said: spec file (relative to `docs/sdd/`), REQ-IDs and previous version, e.g. AUTH.md, REQ-AUTH-002, v1.1>
 - **User decided:** <the decision>
 - **Reason:** <reason>
 - **Affected files:** <list>
@@ -256,17 +267,17 @@ Entry format:
 
 ### 7.1 Questions
 
-Questions are asked **one at a time, with options**. If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice.
+Questions are asked **one at a time, with options**. If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice. Trivial decisions (golden rule 2) are not asked: they are taken with the recommended option and listed in the next summary to the user. When in doubt whether a decision is trivial, it is not trivial — ask.
 
 ### 7.2 Status line
 
 Every Manager message starts with the current position in the cycle:
 
 ```
-<task> · Phase <n|—> · <agent> · iteration <k>
+<task> · Phase <PH-CODE-n|—> · <agent> · iteration <k>
 ```
 
-Example: `auth-login · Phase 2 · Specifier · iteration 3`. Use `—` when there is no phase.
+Example: `auth-login · Phase PH-AUTH-2 · Specifier · iteration 3`. Use `—` when there is no phase.
 
 While research is being approved, run or reported (§4.5), `<agent>` is `Researcher`; the task name is unchanged, and the iteration keeps the count of the step that requested the research.
 

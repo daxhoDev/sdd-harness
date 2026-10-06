@@ -7,7 +7,7 @@ Set up a Spec Driven Development (SDD) harness for this project, before any deta
 ## 1. Golden rules
 
 1. **Docs are the single source of truth.** They always take precedence over code; code must comply with them. If code and docs disagree, the code is wrong until the user decides otherwise.
-2. **Never make a decision on your own — not even the smallest one.** Every decision is the user's. Agents may (and should) bring proposals, but they are presented as proposals and the user chooses.
+2. **Never make a non-trivial decision on your own.** Every decision affecting the product, scope, architecture, stack, cost, security or the workflow itself is the user's: agents bring proposals as options and the user chooses. **Trivial decisions** (form details: ID formats, naming, formatting, where a section lives, wording) are taken by the agent with the recommended option and listed under *Decided (trivial)* in its next report (the Manager: in its next summary). When in doubt whether a decision is trivial, it is not trivial — ask.
 3. **Every time the user specifies something, ask questions to fill in the gaps** before anything moves forward.
 4. **Docs never contradict each other.** Every change (specification, deviation, clarification) is propagated to every affected document in the same pass.
 5. **Each agent does only its own job.** No agent ever performs work belonging to another role.
@@ -55,6 +55,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - If there are doubts, contradictions, or any decision to be made, reports them to the Manager **as thoroughly as possible**, including options and proposals. Does not write anything until all of them are resolved by the user.
 - Once nothing is left to clarify, writes/updates all relevant documentation wherever required, keeping specs always up to date and in sync **before** any implementation.
 - Large tasks are always broken down into implementation phases.
+- Proposes every new `docs/sdd/` file (module or process), and every rename, merge or split, in a Decisions report item (name, code, purpose, reason); the file is created only after the user approves it.
 - When specs are written, gives the Manager precise instructions for the Implementer: which documents must be read, and any additional information to keep in mind.
 - Right after the user approves a spec (before the task branch is created), sets its Status to `Approved` and its version to `v1.0` (or bumps it, for changes to an already approved spec).
 - When a phase closes (after the user's OK, before the commit), sets the phase to `Done`, bumps the spec version if needed (updating the spec's row in `MAIN.md`), and adds the CHANGELOG entry.
@@ -180,30 +181,33 @@ docs/sdd/
 ├── CONVENTIONS.md    # Project conventions (stack, style, structure, testing, etc.)
 ├── CHANGELOG.md      # Change history — references only
 ├── DEVIATIONS.md     # Historical record of user-mandated deviations
-└── specs/
-    ├── _TEMPLATE.md  # Spec template (not a module); also keeps specs/ tracked in git
-    └── <module>.md   # One file per module
+├── _TEMPLATE.md      # Spec module template (not a module)
+└── <NAME>.md         # One file per module (e.g. ARCHITECTURE.md, BILLING.md, PUSH_DELIVERY.md)
 ```
 
-Every doc except `MAIN.md` starts with a back-link line: `← Back to [MAIN](<relative path>/MAIN.md)`.
+- The process docs are a fixed set: `MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`. Every other `.md` file in `docs/sdd/` is a **spec module** that holds all the information about one module: description, requirements, acceptance criteria and phases.
+- Module file names are UPPERCASE, with `_` between words (prefer one word).
+- Every doc except `MAIN.md` starts with a back-link line: `← Back to [MAIN](MAIN.md)`.
 
 ### 5.1 MAIN.md
 - Project overview placeholder.
-- Index table: process docs and spec modules (module code, file, version, status). `_TEMPLATE.md` is listed as "template, not a module".
+- Two index tables: **Process docs** (document, purpose, version) and **Modules** (document, code, purpose, version, status). `_TEMPLATE.md` is listed under process docs as "template, not a module".
 - Link to `AGENTS.md`.
 
-### 5.2 Spec modules (`docs/sdd/specs/<module>.md`)
-Fixed template (in `specs/_TEMPLATE.md`):
-- **Header:** Module, Version, Status (`Draft` | `Approved`), Last updated, back-link to MAIN.
+### 5.2 Spec modules (`docs/sdd/<NAME>.md`)
+Fixed template (in `_TEMPLATE.md`), one for every module:
+- **Header:** Module, Module code, Version, Status (`Draft` | `Approved`), Last updated, back-link to MAIN.
+- **Description** (required). Descriptive modules (e.g. ARCHITECTURE) write "None" in the Requirements and phases sections.
+- **Draft-only sections:** a Draft note, an optional "Decided so far" section (decided items as prose until REQ/AC are written) and an "Open points" section. Before approval, "Decided so far" is converted into requirements and removed, "Open points" is emptied or removed, and the Draft note is removed.
 - **Versioning:** `v0.1` while draft; `v1.0` on approval. MINOR bump for added or clarified requirements; MAJOR bump for changed or removed requirements or behaviour.
 - **Changing an approved spec:** its Status stays `Approved`; the version is bumped when the user approves the change.
 - **Requirements:** `REQ-<CODE>-NNN`, where `<CODE>` is a 2–6 uppercase-letter module code, recorded in MAIN.md.
 - **Acceptance criteria:** `AC-<CODE>-NNN-k`, in Given/When/Then form, for every requirement (the Reviewer derives tests from them).
-- **Implementation phases:** `PH-<n>`, each with status (`Planned` | `In progress` | `In review` | `Done`) and the REQ-IDs it covers.
+- **Implementation phases:** `PH-<CODE>-<n>`, each with status (`Planned` | `In progress` | `In review` | `Done`) and the REQ-IDs it covers (which may include REQ-IDs of other modules).
 
 ### 5.3 CHANGELOG.md
 Keep a Changelog format: an `## [Unreleased]` section with the standard categories (Added/Changed/Deprecated/Removed/Fixed/Security); only categories that have entries are shown. Entries are one line and **references only**, e.g.
-`- 2026-10-02 · specs/auth.md → v1.1 · task auth-login / PH-2 · DEV-003`.
+`- 2026-10-02 · AUTH.md → v1.1 · task auth-login / PH-AUTH-2 · DEV-003` (file names relative to `docs/sdd/`).
 Release headings are added once the user defines a release scheme.
 
 ### 5.4 DEVIATIONS.md
@@ -212,7 +216,7 @@ Historical record of every deviation. A **deviation** is any user decision that 
 ```
 ### DEV-NNN — <title>
 - Date:
-- Spec said: (spec + REQ-IDs + previous version)
+- Spec said: (spec file + REQ-IDs + previous version, e.g. AUTH.md, REQ-AUTH-002, v1.1)
 - User decided:
 - Reason:
 - Affected files:
@@ -230,8 +234,8 @@ Every deviation is also propagated to all affected docs so that no document cont
 
 ## 6. Interaction with the user
 
-- **Questions: one at a time, with options.** If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice.
-- **Status line:** every Manager message starts with `<task> · Phase <n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`. During research, `<agent>` is `Researcher`; the task name is unchanged and the iteration keeps the requesting step's count.
+- **Questions: one at a time, with options.** If an agent has a proposal, it is shown as one option marked as recommended — never applied without the user's choice. Trivial decisions are not asked (golden rule 2).
+- **Status line:** every Manager message starts with `<task> · Phase <PH-CODE-n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`. During research, `<agent>` is `Researcher`; the task name is unchanged and the iteration keeps the requesting step's count.
 - Approval stops are mandatory: (1) after the Specifier's pass, before implementation; (2) after review, before closing a phase/task.
 
 ---
@@ -254,7 +258,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 ## 9. Bootstrap (what to do now)
 
 Treat the bootstrap as the first SDD task:
-1. **Specifier** drafts `AGENTS.md`, `CLAUDE.md`, `.claude/agents/specifier.md`, `.claude/agents/implementer.md`, `.claude/agents/reviewer.md`, `.claude/agents/researcher.md`, and the `docs/sdd/` skeleton (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `specs/_TEMPLATE.md`), following the rules above.
+1. **Specifier** drafts `AGENTS.md`, `CLAUDE.md`, `.claude/agents/specifier.md`, `.claude/agents/implementer.md`, `.claude/agents/reviewer.md`, `.claude/agents/researcher.md`, and the `docs/sdd/` skeleton (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`), following the rules above.
    - No spec is written for the harness itself (`AGENTS.md` is its definition).
    - The CHANGELOG gets one entry, "SDD harness bootstrapped", referencing `AGENTS.md` and the skeleton.
 2. **Stop** — the user approves or requests changes.
