@@ -3,6 +3,10 @@
   "description": "Spec Driven Development harness: installs a five-role (Manager, Specifier, Implementer, Reviewer, Researcher) SDD workflow into a project.",
   "version": "0.4.0",
   "author": {
-    "name": "daxhoDev"
-  }
+    "name": "daxhoDev",
+    "url": "https://github.com/daxhoDev"
+  },
+  "homepage": "https://github.com/daxhoDev/sdd-harness",
+  "repository": "https://github.com/daxhoDev/sdd-harness",
+  "license": "MIT"
 }
