@@ -45,4 +45,5 @@ No other placeholder exists; every other file is copied unchanged.
    - the files created (and any kept or skipped by the user's choice);
    - that nothing was committed and no branch was created;
    - that the subagents load in a new session (restart Claude Code in this project if they do not appear);
-   - that from now on the project follows `AGENTS.md`.
+   - that from now on the project follows `AGENTS.md`;
+   - that in the next session the Manager runs the bootstrap task (`AGENTS.md` §10): it commits the harness files on `chore/sdd-bootstrap` after the user's OK and, if the project already holds other files, scans the repository and proposes migrating any existing SDD documentation into the harness format, subject to the user's approval.

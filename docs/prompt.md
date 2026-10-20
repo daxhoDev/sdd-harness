@@ -62,7 +62,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - When specs are written, gives the Manager precise instructions for the Implementer: which documents must be read, and any additional information to keep in mind.
 - Right after the user approves a spec (before the task branch is created), sets its Status to `Approved` and its version to `v1.0` (or bumps it, for changes to an already approved spec).
 - When a phase closes (after the user's OK, before the commit), sets the phase to `Done`, bumps the spec version if needed (updating the spec's row in `MAIN.md`), and adds the CHANGELOG entry.
-- Permissions: writes **only** inside `docs/`, plus the process files `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — **nothing else, ever**. Never writes code or tests.
+- Permissions: writes **only** inside `docs/`, plus the process files `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — **nothing else, ever**, except deleting the originals approved for deletion in the existing project scan (§9). Never writes code or tests.
 
 ### 2.3 Implementer
 - Before touching any code, reads **all** the documentation the Specifier pointed to, plus the additional information provided.
@@ -170,7 +170,7 @@ Requester (Specifier | Implementer | Reviewer | Manager)
 
 Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided — the harness creates and maintains an environment preflight health-check script that keeps the harness from working on a broken environment (golden rule 9).
 
-- **Creation** is a normal SDD phase: the **first phase of the task that decides the Stack**, on the same task branch. The Specifier specs it in a dedicated module `ENV.md` (code `ENV`, proposed for approval like any new file), whose requirements and acceptance criteria cover the four checks and the exit-code contract. The parameters go in the `Environment preflight` section of `CONVENTIONS.md`: script path/name, variant(s), runtime(s), minimum version(s) and test command; the minimum versions are raised to the user as options. The Implementer writes the script; the Reviewer reviews, tests and commits it.
+- **Creation** is a normal SDD phase: the **first implementation phase of the task that decides the Stack**, on the same task branch (in the bootstrap, right after the existing project scan, §9). The Specifier specs it in a dedicated module `ENV.md` (code `ENV`, proposed for approval like any new file), whose requirements and acceptance criteria cover the four checks and the exit-code contract. The parameters go in the `Environment preflight` section of `CONVENTIONS.md`: script path/name, variant(s), runtime(s), minimum version(s) and test command; the minimum versions are raised to the user as options. The Implementer writes the script; the Reviewer reviews, tests and commits it.
 - **OS-dependent:** a Bash script (`preflight.sh`) on Unix/macOS, a PowerShell script (`preflight.ps1`) on Windows; the Specifier specs which variant(s) are needed, and the Manager runs the one for its OS.
 - **Four checks, in order:** (1) the runtime is installed; (2) it meets the minimum required version; (3) the test suite passes, if one exists (no suite yet = `SKIPPED`, not failed); (4) a readable status summary with the result of each check.
 - **Exit-code contract:** exit 0 only when every check passed (a skipped suite still passes); non-zero if any of checks 1–3 fails.
@@ -287,4 +287,11 @@ Treat the bootstrap as the first SDD task:
 2. **Stop** — the user approves or requests changes.
 3. With the user's OK, the **Manager** creates `development` from the main branch and then `chore/sdd-bootstrap` from `development`.
 4. **Reviewer** verifies the structure against this prompt, and commits on `chore/sdd-bootstrap` after the user's OK.
-5. Then wait for the user's first input. Do not interview the user about the project until they provide it.
+5. **Existing project scan** — only if the repository already holds files besides the harness; same task and branch:
+   - **Scan:** the Specifier reads the whole repository and, writing nothing, reports in a Decisions report every candidate SDD document (specs from SDD tools such as spec-kit, Kiro or OpenSpec, and any other document stating requirements, acceptance criteria or design decisions) with its proposed target module or "not migrated", the `CONVENTIONS.md` sections the code makes evident as options, the originals proposed for deletion, and everything the originals leave undecided. The user validates what is migrated and where.
+   - **Migration:** the Specifier writes the approved modules in the harness format, faithful to the originals plus the user's decisions, with the migrated requirements in `PH-<CODE>-1` (status `In review`), and fills the decided `CONVENTIONS.md` sections.
+   - **Stop** — the user approves the migrated specs; the Specifier records the approval.
+   - **Conformance check:** the Reviewer verifies the existing code against the migrated specs, writing no tests and fixing nothing. For each implementation gap the user decides: fix the code in a later task (moved to a new `Planned` phase) or change the spec.
+   - **Stop** — the user's OK. The Specifier sets `PH-<CODE>-1` to `Done`, deletes the originals approved for deletion (its only write outside `docs/` and the process files; they remain in the git history) and adds the CHANGELOG entries; the Reviewer commits.
+   - If the Stack was decided, the environment preflight phase follows (§3.2).
+6. Then wait for the user's first input. Do not interview the user about the project until they provide it.

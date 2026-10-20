@@ -65,6 +65,8 @@ The skill only copies files:
 
 It creates no branches and makes no commits. If the project is not a git repository, or any target file already exists, it stops and asks you what to do.
 
+In the next session, the Manager runs the bootstrap as the first SDD task (`chore/sdd-bootstrap`): it commits the harness files after your OK. In an existing project it also scans the repository, proposes migrating any SDD documentation it finds (spec-kit, Kiro, OpenSpec or plain docs) into the harness format, and checks the existing code against the migrated specs. Nothing is migrated or deleted without your approval.
+
 ## Layout
 
 ```

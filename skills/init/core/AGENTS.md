@@ -34,6 +34,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Gives every option a plain-language description of what it means for the user, and explains any question the user asks about at a mid-level developer depth before asking it again (§7.1).
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
 - Gives each subagent only the context it needs (golden rule 6).
+- In the first session after installation, runs the bootstrap task, including the existing project scan when the repository already holds other files (§10).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
 - Before the first hand-off to the Implementer in each phase, runs the environment preflight gate; if it fails, stops everything and reports the summary to the user (§4.6).
@@ -48,7 +49,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 
 ### 2.2 Specifier — summary
 
-Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Specs the environment preflight script once the stack is decided (§4.6). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever. Never writes code or tests.
+Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Specs the environment preflight script once the stack is decided (§4.6). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever, except deleting the originals approved for deletion in the existing project scan (§10.2). Never writes code or tests.
 Full definition: [`.claude/agents/specifier.md`](.claude/agents/specifier.md).
 
 ### 2.3 Implementer — summary
@@ -178,7 +179,7 @@ Requester (Specifier | Implementer | Reviewer | Manager)
 
 The environment preflight is a health-check script that keeps the harness from working on a broken environment (golden rule 9).
 
-**Creation.** The moment the Stack in `CONVENTIONS.md` is decided, the Specifier adds the script as the **first phase of that same task**, on the same task branch. It is a normal SDD phase:
+**Creation.** The moment the Stack in `CONVENTIONS.md` is decided, the Specifier adds the script as the **first implementation phase of that same task**, on the same task branch (in the bootstrap, right after the existing project scan, §10.2). It is a normal SDD phase:
 
 - **Spec:** a dedicated module `ENV.md` (module code `ENV`), proposed for the user's approval like any new file (§6.1). Its requirements and acceptance criteria cover the four checks and the exit-code contract below, so the Reviewer derives tests from them.
 - **Parameters:** the `Environment preflight` section of `CONVENTIONS.md` records the script path and name, the variant(s), the runtime(s), their minimum version(s) and the test command. The minimum versions are put to the user as options.
@@ -402,10 +403,27 @@ Arrows, check marks, emojis, agent names and report names are fixed and in Engli
 
 ## 10. Bootstrap
 
-The SDD harness was set up as the first SDD task:
+The harness is installed by the plugin's `init` skill, which only copies files: it creates no branch and makes no commit. The first Manager session afterwards (recognised because `docs/sdd/CHANGELOG.md` holds only the installation entry) runs the **bootstrap** as the first SDD task, `chore/sdd-bootstrap`. No spec is written for the harness itself: `AGENTS.md` is its definition. Status line phase: `—`.
 
-1. The Specifier drafts `AGENTS.md`, `CLAUDE.md`, the agent files and the `docs/sdd/` skeleton.
-2. **Stop:** the user approves or requests changes.
-3. The Manager creates `development` from `master`, then the task branch `chore/sdd-bootstrap` from `development`.
-4. The Reviewer verifies the structure against the bootstrap prompt (structure and compliance only: the bootstrap has no testable acceptance criteria, so no tests are written; see `.claude/agents/reviewer.md`) and commits on `chore/sdd-bootstrap` after the user's OK.
-5. The Manager then waits for the user's first input, and does not interview the user about the project until they provide it.
+### 10.1 Harness install
+
+1. The Manager creates `development` if it does not exist (asking the user first, §5), then the task branch `chore/sdd-bootstrap` from `development`.
+2. The Reviewer verifies the installed files against this file (structure and compliance only: the bootstrap has no testable acceptance criteria, so no tests are written; see `.claude/agents/reviewer.md`).
+3. **Stop:** the user approves or requests changes.
+4. The Reviewer commits the harness files on `chore/sdd-bootstrap`.
+5. If the repository holds nothing besides the harness files, the bootstrap ends here (step 6 of §10.2). Otherwise it continues with §10.2, in the same task and branch.
+
+### 10.2 Existing project scan
+
+1. **Scan.** The Specifier scans the whole repository and, writing nothing, reports with a Decisions report:
+   - every candidate SDD document found (specs from SDD tools such as spec-kit, Kiro or OpenSpec, and any other document stating requirements, acceptance criteria or design decisions): its path, what it holds, and the proposed target module (name and code, §6.1) or "not migrated";
+   - the `CONVENTIONS.md` sections the code makes evident (e.g. Stack, Project structure, Testing), as options;
+   - the original documents proposed for deletion once migrated;
+   - everything the originals leave undecided (e.g. missing acceptance criteria).
+
+   The user validates what is migrated and where. This loops until nothing is pending.
+2. **Migration.** The Specifier writes the approved modules in the harness format (§6.3), faithful to the originals plus the user's decisions, registers them in `MAIN.md`, and fills the decided `CONVENTIONS.md` sections. The migrated requirements go in phase `PH-<CODE>-1` of their module, with status `In review`.
+3. **STOP 1:** the user approves the migrated specs or requests changes. The Specifier records the approval (§4.2).
+4. **Conformance check.** The Reviewer verifies the existing code against the migrated specs and reports every mismatch as a finding; it fixes nothing and writes no tests. For each implementation gap the user decides: fix the code in a later task (the Specifier moves the requirement to a new `Planned` phase) or change the spec (a normal spec change, §4.2).
+5. **STOP 2:** the user gives the OK. Closing sequence (§4.3): the Specifier sets every `PH-<CODE>-1` to `Done`, deletes the original documents approved for deletion (they remain in the git history), and adds the CHANGELOG entries; the Reviewer commits.
+6. If the Stack was decided, the environment preflight phase follows in the same task (§4.6). Then the Manager waits for the user's first input, and does not interview the user about the project until they provide it.
