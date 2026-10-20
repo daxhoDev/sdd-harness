@@ -39,8 +39,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
 - Before the first hand-off to the Implementer in each phase, runs the environment preflight gate; if it fails, stops everything and reports the summary to the user (§4.6).
 - At phase/task close, runs the closing sequence (§4.3).
-- Always reports the current position in the cycle (§7.2).
-- Reports subagent hand-offs and returns in the standard short format only, never narrating them (§7.3).
+- Reports subagent hand-offs and returns in the standard short format only, never narrating them (§7.2).
 - Never searches the internet, reads online docs or pages, or queries external APIs (golden rule 8). It may request research itself while refining the user's input, and it handles research requests from the other agents (§4.5).
 - **Always** asks the user before launching any research, explaining what will be researched and why. Nothing is ever launched without the user's approval. This is a mandatory approval that can happen at any point in the cycle (§4.5).
 - If the user declines a research request, puts to the user the question the research was meant to answer (one at a time, with options) and passes the user's answer to the requesting agent when re-launching it (§4.5).
@@ -329,19 +328,7 @@ Questions are asked **one at a time, with options**. If an agent has a proposal,
 
 Only then does the Manager ask the question again (one at a time, with options).
 
-### 7.2 Status line
-
-Every Manager message starts with the current position in the cycle:
-
-```
-<task> · Phase <PH-CODE-n|—> · <agent> · iteration <k>
-```
-
-Example: `auth-login · Phase PH-AUTH-2 · Specifier · iteration 3`. Use `—` when there is no phase.
-
-While research is being approved, run or reported (§4.5), `<agent>` is `Researcher`; the task name is unchanged, and the iteration keeps the count of the step that requested the research.
-
-### 7.3 Subagent hand-off output
+### 7.2 Subagent hand-off output
 
 The Manager never narrates subagent work (what an agent is about to do, is doing, or did), nor its own next steps (e.g. "when it finishes, I will launch…", "once the report is back, I will present…"). A message that needs nothing from the user holds only the fixed lines below, and nothing else. Every hand-off and every return is one fixed line:
 
@@ -364,7 +351,7 @@ The Manager never narrates subagent work (what an agent is about to do, is doing
 - Everything after a `←` line is only what the user must read or act on: pending decisions (§7.1), approval stops (§3), research approvals and the Researcher report summary (§4.5), and a failed preflight summary (§4.6). Anything that needs no action from the user is not expanded.
 - The preflight gate (§4.6) is one line too: `▸ preflight · PASS` or `▸ preflight · FAIL (check <n>)`. In the chain line it appears as `preflight ✓` or `preflight ✗`.
 
-**Message to the user.** When the Manager returns to the user after one or more hand-offs, the message starts with the status line (§7.2), then a single chain line summarising every hand-off since its previous message, instead of repeating the `→`/`←` lines:
+**Message to the user.** When the Manager returns to the user after one or more hand-offs, the message starts with a single chain line summarising every hand-off since its previous message, instead of repeating the `→`/`←` lines:
 
 ```
 <emoji> <agent> <✓|✗> [(<outcome>)] → <emoji> <agent> <✓|✗> [(<outcome>)] → …
@@ -375,7 +362,6 @@ The Manager never narrates subagent work (what an agent is about to do, is doing
 Example:
 
 ```
-auth-login · Phase PH-AUTH-2 · Reviewer · iteration 2
 🔵 Specifier ✓ → preflight ✓ → 🟢 Implementer ✓ → 🟠 Reviewer ✗ (2 gaps) → 🟢 Implementer ✓ → 🟠 Reviewer ✓
 ```
 
@@ -403,7 +389,7 @@ Arrows, check marks, emojis, agent names and report names are fixed and in Engli
 
 ## 10. Bootstrap
 
-The harness is installed by the plugin's `init` skill, which only copies files: it creates no branch and makes no commit. The first Manager session afterwards (recognised because `docs/sdd/CHANGELOG.md` holds only the installation entry) runs the **bootstrap** as the first SDD task, `chore/sdd-bootstrap`. No spec is written for the harness itself: `AGENTS.md` is its definition. Status line phase: `—`.
+The harness is installed by the plugin's `init` skill, which only copies files: it creates no branch and makes no commit. The first Manager session afterwards (recognised because `docs/sdd/CHANGELOG.md` holds only the installation entry) runs the **bootstrap** as the first SDD task, `chore/sdd-bootstrap`. No spec is written for the harness itself: `AGENTS.md` is its definition.
 
 ### 10.1 Harness install
 
