@@ -1,10 +1,10 @@
 ---
-name: sdd-init
+name: init
 description: Install the SDD harness (AGENTS.md, CLAUDE.md, Specifier/Implementer/Reviewer/Researcher subagents and the docs/sdd/ skeleton) into the current project. Manual use only.
 disable-model-invocation: true
 ---
 
-# sdd-init — install the SDD harness
+# init — install the SDD harness
 
 Copy the SDD harness templates into the current project. This skill **only copies files**: it creates no branches, makes no commits and never pushes. Never make a decision on your own — whenever something below says "ask", ask the user one question at a time, with options, and wait for the answer.
 

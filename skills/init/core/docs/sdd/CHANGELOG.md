@@ -8,4 +8,4 @@ All notable changes to this project are recorded here, following the [Keep a Cha
 
 ### Added
 
-- {{DATE}} · SDD harness installed (sdd-init v{{VERSION}}) · AGENTS.md, docs/sdd/ skeleton
+- {{DATE}} · SDD harness installed (sdd-harness v{{VERSION}}) · AGENTS.md, docs/sdd/ skeleton
