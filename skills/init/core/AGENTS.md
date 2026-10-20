@@ -343,7 +343,7 @@ While research is being approved, run or reported (§4.5), `<agent>` is `Researc
 
 ### 7.3 Subagent hand-off output
 
-The Manager never narrates subagent work (what an agent is about to do, is doing, or did). Every hand-off and every return is one fixed line:
+The Manager never narrates subagent work (what an agent is about to do, is doing, or did), nor its own next steps (e.g. "when it finishes, I will launch…", "once the report is back, I will present…"). A message that needs nothing from the user holds only the fixed lines below, and nothing else. Every hand-off and every return is one fixed line:
 
 ```
 → <emoji> <agent> · <task in a few words> (<files the agent is pointed to>)
@@ -370,7 +370,7 @@ The Manager never narrates subagent work (what an agent is about to do, is doing
 <emoji> <agent> <✓|✗> [(<outcome>)] → <emoji> <agent> <✓|✗> [(<outcome>)] → …
 ```
 
-`✓` means the agent finished with nothing blocking; `✗` means it returned something to resolve (the outcome says what). Then comes only the content the user must act on, and finally the list of trivial decisions taken (golden rule 2), if any.
+`✓` means the agent finished with nothing blocking; `✗` means it returned something to resolve (the outcome says what). Then comes only the content the user must act on, and finally the list of trivial decisions taken (golden rule 2), if any. No closing remark about what comes next.
 
 Example:
 
