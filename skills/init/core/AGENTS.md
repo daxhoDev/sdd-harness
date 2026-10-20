@@ -58,7 +58,7 @@ Full definition: [`.claude/agents/implementer.md`](.claude/agents/implementer.md
 
 ### 2.4 Reviewer — summary
 
-Reviews the implementation against the docs and conventions, writes the tests (derived from acceptance criteria) and runs them, reports results, and commits on the task branch after the user's OK. Writes tests only; otherwise does not modify code or docs.
+Reviews the implementation against the docs and conventions, writes the tests (derived from acceptance criteria) and runs them, runs the environment preflight as a review step (§4.6), reports results, and commits on the task branch after the user's OK. Writes tests only; otherwise does not modify code or docs.
 Full definition: [`.claude/agents/reviewer.md`](.claude/agents/reviewer.md).
 
 ### 2.5 Researcher — summary
@@ -109,7 +109,7 @@ User ──► Manager (refine: questions to the user, one at a time)
          Implementer implements ──► reports to Manager
             │
             ▼
-         Reviewer: writes & runs tests, checks docs + conventions
+         Reviewer: writes & runs tests, runs preflight, checks docs + conventions
             │  implementation gaps? ──► Manager ──► Implementer (loop)
             │  spec gap/error? ──► STOP, Manager explains to User; if approved:
             │                       Specifier ──► User approval ──► Implementer ──► Reviewer
@@ -199,11 +199,17 @@ The environment preflight is a health-check script that keeps the harness from w
 
 - Exit `0`: the phase goes ahead.
 - Non-zero: everything stops. Nothing is implemented, changed or committed, and the Manager reports the summary to the user.
-- The gate is not run again inside the Implementer ↔ Reviewer loop of the same phase (failing tests there are work in progress, and the Reviewer runs them), nor before the commit.
+- The gate is not run again inside the Implementer ↔ Reviewer loop of the same phase (failing tests there are work in progress), nor before the commit. Inside the loop, the Reviewer runs the script instead, as a review step (below).
 - It is an automatic gate, not a numbered approval stop (§3).
 - It activates only once the script exists: the bootstrap and the phase that first creates the script are not gated; every later phase is.
 
-**After a failure:**
+**In reviews.** Once the script exists, the Reviewer runs it in every review, after writing and running its own tests. It is a review step, not a gate: its result goes into the Review report and never stops the flow by itself.
+
+- Before running it, the Reviewer updates any existing test that contradicts the specs now in scope (tests are the Reviewer's).
+- **Check 1 or 2 failed:** verdict `BLOCKED`; the user fixes the environment and the Manager re-launches the Reviewer.
+- **Check 3 failed:** each failing test is a finding, categorised like any other (an implementation gap, or a spec gap if the docs are at fault), with verdict `FAIL`.
+
+**After a gate failure:**
 
 - **Check 1 or 2 failed** (environment): the user fixes the environment and asks the Manager to retry; the Manager runs the gate again.
 - **Check 3 failed** (tests): the Manager proposes a **repair task** to fix the failing tests. With the user's explicit approval, it runs through the normal SDD flow. Its gate requires only checks 1–2 to pass, as read from the summary; check 3 must pass again by the end of the repair task.

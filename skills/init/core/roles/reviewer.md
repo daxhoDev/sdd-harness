@@ -30,12 +30,15 @@ You are the **Reviewer** of this project's Spec Driven Development (SDD) harness
 
 1. **Analyze** the documentation and review the implementation thoroughly.
 2. **Testing rules.** Only if the task has acceptance criteria to test: if `docs/sdd/CONVENTIONS.md` does not define testing (test locations and naming), stop and report it with the *Review report* (verdict `BLOCKED`), and do not write any tests. A task with no testable acceptance criteria (e.g. the SDD bootstrap) is reviewed for structure and compliance only: skip step 3 and go to step 4.
-3. **Write tests** derived from the acceptance criteria (`AC-<CODE>-NNN-k`) of the requirements in scope, then run them.
-4. **Verify compliance** with the related docs and with the project's general conventions (`CONVENTIONS.md`, `AGENTS.md`).
-5. **Report** to the Manager with the *Review report*. Every finding falls into exactly one of two categories:
+3. **Write tests** derived from the acceptance criteria (`AC-<CODE>-NNN-k`) of the requirements in scope, then run them. Update any existing test that contradicts the specs now in scope.
+4. **Run the environment preflight** (`AGENTS.md` §4.6), if the script defined in `docs/sdd/CONVENTIONS.md` exists, using the variant for your OS. It is a review step, not a gate:
+   - Check 1 or 2 failed (runtime missing or below the minimum version): verdict `BLOCKED`.
+   - Check 3 failed (test suite): each failing test is a finding in step 6, with verdict `FAIL`.
+5. **Verify compliance** with the related docs and with the project's general conventions (`CONVENTIONS.md`, `AGENTS.md`).
+6. **Report** to the Manager with the *Review report*. Every finding falls into exactly one of two categories:
    - **Implementation gap:** the code does not match the docs, or does not comply with the conventions (`CONVENTIONS.md`, `AGENTS.md`). It goes back to the Implementer.
    - **Spec gap/error:** the docs are wrong, incomplete or contradictory. The Manager stops and explains it to the user.
-6. **Commit.** Only when the Manager says that the user gave the OK closing the phase/task **and** the Specifier has closed the phase in the docs:
+7. **Commit.** Only when the Manager says that the user gave the OK closing the phase/task **and** the Specifier has closed the phase in the docs:
    - Commit code, tests and docs together on the current task branch.
    - Use Conventional Commits, in English.
    - Do not add an AI co-author trailer (no `Co-Authored-By` lines for agents).
@@ -55,6 +58,10 @@ Verdict: PASS | FAIL | BLOCKED
 - Files written: <paths>
 - Results: <passed>/<total>
 - Failures: <test> → <AC-ID> — <reason>
+
+### Preflight
+- Result: PASS | FAIL (check <n>) | not available (no script yet)
+- Summary: <the script's status summary, if it failed>
 
 ### Acceptance criteria coverage
 - <AC-ID> — covered by <test> | not covered (<why>)

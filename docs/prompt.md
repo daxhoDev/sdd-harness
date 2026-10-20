@@ -33,7 +33,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Each agent file defines a **fixed report structure**:
   - Specifier: a numbered decision list (context, options, recommendation), or the files written plus reading instructions for the Implementer.
   - Implementer: a list of blocking issues, or the files changed plus notes.
-  - Reviewer: test results, compliance findings (exactly two categories: implementation gap / spec gap; convention non-compliance is an implementation gap) and a verdict.
+  - Reviewer: test results, preflight result, compliance findings (exactly two categories: implementation gap / spec gap; convention non-compliance is an implementation gap) and a verdict.
   - Researcher: Research report (Question researched; Confirmed, with official-source URL; UNCONFIRMED; Contradictions between sources; Date consulted; Open questions).
   - The blocking reports of the Specifier (Decisions), Implementer (Blocked) and Reviewer (Review, verdict `BLOCKED`) have an optional `### Research requests` section (§3.1).
 
@@ -78,6 +78,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Reads `AGENTS.md` and `CONVENTIONS.md` explicitly.
 - Analyzes the documentation and reviews the implementation thoroughly.
 - **Writes the tests** after implementation, derived from the specs' acceptance criteria, and runs them. Test file locations and naming come only from `CONVENTIONS.md`; if testing is not defined there **and the task has acceptance criteria to test**, the Reviewer stops and reports. Tasks with no testable acceptance criteria (e.g. the bootstrap) are reviewed for structure and compliance only.
+- Runs the environment preflight in every review once the script exists, as a review step, not a gate (§3.2).
 - Verifies that everything works and complies with both the related docs and the project's general conventions (`CONVENTIONS.md`, `AGENTS.md`).
 - Reports results to the Manager.
 - After the user's OK closing a phase/task (and the Specifier's doc update), commits code + tests + docs together on the task branch.
@@ -123,7 +124,7 @@ User ──► Manager (refine: questions to the user, one at a time)
          Implementer implements ──► reports to Manager
             │
             ▼
-         Reviewer: writes & runs tests, checks docs + conventions
+         Reviewer: writes & runs tests, runs preflight, checks docs + conventions
             │  implementation gaps? ──► Manager ──► Implementer (loop)
             │  spec gap/error? ──► STOP, Manager explains to User; if approved:
             │                       Specifier ──► User approval ──► Implementer ──► Reviewer
@@ -173,8 +174,9 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 - **OS-dependent:** a Bash script (`preflight.sh`) on Unix/macOS, a PowerShell script (`preflight.ps1`) on Windows; the Specifier specs which variant(s) are needed, and the Manager runs the one for its OS.
 - **Four checks, in order:** (1) the runtime is installed; (2) it meets the minimum required version; (3) the test suite passes, if one exists (no suite yet = `SKIPPED`, not failed); (4) a readable status summary with the result of each check.
 - **Exit-code contract:** exit 0 only when every check passed (a skipped suite still passes); non-zero if any of checks 1–3 fails.
-- **The gate:** before the first hand-off to the Implementer in each phase, the Manager runs the script. A non-zero result stops everything — nothing is implemented, changed or committed, and the Manager reports the summary to the user. It is not run again inside the Implementer ↔ Reviewer loop of the same phase, nor before the commit. It is an automatic gate, not a numbered approval stop. It activates only once the script exists, so the bootstrap and the phase that first creates the script are not gated by it.
-- **After a failure:** if check 1 or 2 failed, the user fixes the environment and asks the Manager to retry. If check 3 failed, the Manager proposes a repair task; with the user's explicit approval it runs through the normal SDD flow, its gate requiring only checks 1–2, and check 3 must pass again by its end.
+- **The gate:** before the first hand-off to the Implementer in each phase, the Manager runs the script. A non-zero result stops everything — nothing is implemented, changed or committed, and the Manager reports the summary to the user. It is not run again as a gate inside the Implementer ↔ Reviewer loop of the same phase, nor before the commit. It is an automatic gate, not a numbered approval stop. It activates only once the script exists, so the bootstrap and the phase that first creates the script are not gated by it.
+- **In reviews:** once the script exists, the Reviewer runs it in every review, after writing and running its own tests and updating any existing test that contradicts the specs in scope. It is a review step, not a gate: its result goes into the Review report (`### Preflight` section). Check 1 or 2 failed → verdict `BLOCKED` (the user fixes the environment); check 3 failed → each failing test is a finding categorised like any other, verdict `FAIL`.
+- **After a gate failure:** if check 1 or 2 failed, the user fixes the environment and asks the Manager to retry. If check 3 failed, the Manager proposes a repair task; with the user's explicit approval it runs through the normal SDD flow, its gate requiring only checks 1–2, and check 3 must pass again by its end.
 - **Maintenance:** when the stack, a minimum version or the test command changes, the Specifier updates `ENV.md` and `CONVENTIONS.md` and includes the script update in its reading instructions for the Implementer.
 
 ---
