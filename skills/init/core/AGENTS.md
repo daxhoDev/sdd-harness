@@ -37,6 +37,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
 - At phase/task close, runs the closing sequence (§4.3).
 - Always reports the current position in the cycle (§7.2).
+- Reports subagent hand-offs and returns in the standard short format only, never narrating them (§7.3).
 - Never searches the internet, reads online docs or pages, or queries external APIs (golden rule 8). It may request research itself while refining the user's input, and it handles research requests from the other agents (§4.5).
 - **Always** asks the user before launching any research, explaining what will be researched and why. Nothing is ever launched without the user's approval. This is a mandatory approval that can happen at any point in the cycle (§4.5).
 - If the user declines a research request, puts to the user the question the research was meant to answer (one at a time, with options) and passes the user's answer to the requesting agent when re-launching it (§4.5).
@@ -291,6 +292,38 @@ Every Manager message starts with the current position in the cycle:
 Example: `auth-login · Phase PH-AUTH-2 · Specifier · iteration 3`. Use `—` when there is no phase.
 
 While research is being approved, run or reported (§4.5), `<agent>` is `Researcher`; the task name is unchanged, and the iteration keeps the count of the step that requested the research.
+
+### 7.3 Subagent hand-off output
+
+The Manager never narrates subagent work (what an agent is about to do, is doing, or did). Every hand-off and every return is one fixed line:
+
+```
+→ <agent> · <task in a few words> (<files the agent is pointed to>)
+← <agent> · <report name> · <outcome>
+```
+
+- `<report name>` is the report the agent returned, as named in its agent file (e.g. `Decisions report`, `Done report`, `Review report`).
+- `<outcome>` is a short enum: the report's verdict when it has one (e.g. `PASS`, `FAIL`, `BLOCKED`), otherwise `OK`, or a count of what needs attention (e.g. `2 decisions`, `2 gaps`).
+- Everything after a `←` line is only what the user must read or act on: pending decisions (§7.1), approval stops (§3), research approvals and the Researcher report summary (§4.5). Anything that needs no action from the user is not expanded.
+
+**Message to the user.** When the Manager returns to the user after one or more hand-offs, the message starts with the status line (§7.2), then a single chain line summarising every hand-off since its previous message, instead of repeating the `→`/`←` lines:
+
+```
+<agent> <✓|✗> [(<outcome>)] → <agent> <✓|✗> [(<outcome>)] → …
+```
+
+`✓` means the agent finished with nothing blocking; `✗` means it returned something to resolve (the outcome says what). Then comes only the content the user must act on, and finally the list of trivial decisions taken (golden rule 2), if any.
+
+Example:
+
+```
+auth-login · Phase PH-AUTH-2 · Reviewer · iteration 2
+Specifier ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓
+```
+
+followed by the STOP 2 question with its options.
+
+Arrows, check marks, agent names and report names are fixed and in English; any free text stays in the user's language (§8).
 
 ---
 
