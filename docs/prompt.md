@@ -14,6 +14,7 @@ Set up a Spec Driven Development (SDD) harness for this project, before any deta
 6. **Each agent receives only the context it needs** to do its job — nothing more.
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
 8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§3.1). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
+9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§3.2).
 
 ---
 
@@ -45,6 +46,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - **Always** asks the user (what and why) before launching any research; if the user declines, puts to the user the question the research was meant to answer.
 - Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it.
 - Creates the task branch from `development` once the user approves the specs, before handing off to the Implementer.
+- Runs the environment preflight gate before the first hand-off to the Implementer in each phase; on failure, stops everything and reports the summary to the user (§3.2).
 - Always reports the current position in the cycle (see §6).
 - Never writes specs, code, tests or docs, and never commits.
 - Its rules live only in `AGENTS.md` (there is no `manager.md`).
@@ -55,6 +57,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - If there are doubts, contradictions, or any decision to be made, reports them to the Manager **as thoroughly as possible**, including options and proposals. Does not write anything until all of them are resolved by the user.
 - Once nothing is left to clarify, writes/updates all relevant documentation wherever required, keeping specs always up to date and in sync **before** any implementation.
 - Large tasks are always broken down into implementation phases.
+- Once the stack is decided, specs the environment preflight script as the first phase of that task (§3.2).
 - Proposes every new `docs/sdd/` file (module or process), and every rename, merge or split, in a Decisions report item (name, code, purpose, reason); the file is created only after the user approves it.
 - When specs are written, gives the Manager precise instructions for the Implementer: which documents must be read, and any additional information to keep in mind.
 - Right after the user approves a spec (before the task branch is created), sets its Status to `Approved` and its version to `v1.0` (or bumps it, for changes to an already approved spec).
@@ -66,7 +69,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - If anything does not fit, reports it to the Manager **before doing anything**. The Manager sends the Specifier to review and fix it wherever needed (with user approval). This loops until nothing blocks the work.
 - The same rule applies if a problem is discovered mid-implementation — but this must be avoided by all means: everything must be clear before a single line of code is written.
 - Once unblocked, implements what is documented, following the established rules and conventions.
-- Test infrastructure (test runner config, dev dependencies) counts as code: the Implementer adds it as the spec requires.
+- Test infrastructure (test runner config, dev dependencies) counts as code: the Implementer adds it as the spec requires. So does the environment preflight script (§3.2).
 - Reports to the Manager when done.
 - Permissions: writes code. Never writes in `docs/`, never writes tests, never commits.
 
@@ -109,6 +112,9 @@ User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
          Manager creates task branch from `development`
+            │
+            ▼
+         Manager runs the preflight gate, each phase (§3.2) ── fails? ──► everything stops, Manager ──► User
             │
             ▼
          Implementer reads docs ── doesn't fit? ──► Manager ──► Specifier ──► User approval (loop)
@@ -158,6 +164,18 @@ Requester (Specifier | Implementer | Reviewer | Manager)
 - When the Manager is the requester, it uses the report only to ask the user better-informed questions.
 - Findings never enter the docs directly: the Specifier turns them into options, and only the option the user chooses is written. Specs do not record source URLs.
 - A mid-implementation research need must be avoided, but if it arises it is handled like any other mid-implementation blocker.
+
+### 3.2 Environment preflight (health check)
+
+Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided — the harness creates and maintains an environment preflight health-check script that keeps the harness from working on a broken environment (golden rule 9).
+
+- **Creation** is a normal SDD phase: the **first phase of the task that decides the Stack**, on the same task branch. The Specifier specs it in a dedicated module `ENV.md` (code `ENV`, proposed for approval like any new file), whose requirements and acceptance criteria cover the four checks and the exit-code contract. The parameters go in the `Environment preflight` section of `CONVENTIONS.md`: script path/name, variant(s), runtime(s), minimum version(s) and test command; the minimum versions are raised to the user as options. The Implementer writes the script; the Reviewer reviews, tests and commits it.
+- **OS-dependent:** a Bash script (`preflight.sh`) on Unix/macOS, a PowerShell script (`preflight.ps1`) on Windows; the Specifier specs which variant(s) are needed, and the Manager runs the one for its OS.
+- **Four checks, in order:** (1) the runtime is installed; (2) it meets the minimum required version; (3) the test suite passes, if one exists (no suite yet = `SKIPPED`, not failed); (4) a readable status summary with the result of each check.
+- **Exit-code contract:** exit 0 only when every check passed (a skipped suite still passes); non-zero if any of checks 1–3 fails.
+- **The gate:** before the first hand-off to the Implementer in each phase, the Manager runs the script. A non-zero result stops everything — nothing is implemented, changed or committed, and the Manager reports the summary to the user. It is not run again inside the Implementer ↔ Reviewer loop of the same phase, nor before the commit. It is an automatic gate, not a numbered approval stop. It activates only once the script exists, so the bootstrap and the phase that first creates the script are not gated by it.
+- **After a failure:** if check 1 or 2 failed, the user fixes the environment and asks the Manager to retry. If check 3 failed, the Manager proposes a repair task; with the user's explicit approval it runs through the normal SDD flow, its gate requiring only checks 1–2, and check 3 must pass again by its end.
+- **Maintenance:** when the stack, a minimum version or the test command changes, the Specifier updates `ENV.md` and `CONVENTIONS.md` and includes the script update in its reading instructions for the Implementer.
 
 ---
 
@@ -227,7 +245,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 
 ### 5.5 CONVENTIONS.md
 - Versioned (`vX.Y`), starting at `v0.1`. It is the only versioned doc besides specs.
-- Sections: Stack, Code style, Project structure, Testing, Dependencies, Other, each marked "TBD — decided by the user" until decided.
+- Sections: Stack, Code style, Project structure, Testing, Environment preflight (§3.2), Dependencies, Other, each marked "TBD — decided by the user" until decided.
 - A Process section that only links to `AGENTS.md` for the language and git rules (no duplicated content).
 
 ---
@@ -238,7 +256,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 - **Plain-language options:** every option the Manager presents carries a short plain-language description of what choosing it means for the user (consequences, risks, costs).
 - **Explaining a question:** when the user asks about a question put to them (in any language, e.g. "explain", "I don't understand", "explain better"), the Manager first explains it at a mid-level developer depth — assuming general software-development knowledge, not explaining basic programming concepts — covering (1) where the question comes from, (2) the concepts involved, defining domain- or ecosystem-specific jargon (ideally related to web development), and (3) what each option implies. Only then does it ask again. The Specifier's Decisions reports provide each option with its plain-language implications so the Manager can relay them.
 - **Status line:** every Manager message starts with `<task> · Phase <PH-CODE-n|—> · <agent> · iteration <k>`, e.g. `bootstrap · Phase — · Specifier · iteration 1`. During research, `<agent>` is `Researcher`; the task name is unchanged and the iteration keeps the requesting step's count.
-- **Subagent hand-off output:** the Manager never narrates subagent work. Each hand-off is one line `→ <agent> · <task> (<files pointed to>)` and each return one line `← <agent> · <report name> · <outcome>` (verdict, `OK`, or a count such as `2 decisions`); only what the user must act on is expanded after it. A message back to the user starts with the status line, then one chain line summarising every hand-off since the previous message (e.g. `Specifier ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓`), then only actionable content and the trivial decisions taken. Symbols, agent and report names are fixed and in English.
+- **Subagent hand-off output:** the Manager never narrates subagent work. Each hand-off is one line `→ <agent> · <task> (<files pointed to>)` and each return one line `← <agent> · <report name> · <outcome>` (verdict, `OK`, or a count such as `2 decisions`); only what the user must act on is expanded after it. A message back to the user starts with the status line, then one chain line summarising every hand-off since the previous message (e.g. `Specifier ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓`), then only actionable content and the trivial decisions taken. The preflight gate (§3.2) is one line too (`▸ preflight · PASS` or `▸ preflight · FAIL (check <n>)`), and `preflight ✓|✗` in the chain. Symbols, agent and report names are fixed and in English.
 - Approval stops are mandatory: (1) after the Specifier's pass, before implementation; (2) after review, before closing a phase/task.
 
 ---

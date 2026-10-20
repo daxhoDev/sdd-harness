@@ -26,6 +26,10 @@ TBD — decided by the user.
 
 TBD — decided by the user.
 
+## Environment preflight
+
+TBD — decided by the user once the Stack is decided (see [AGENTS.md](../../AGENTS.md) §4.6): script path and name, variant(s), runtime(s), minimum version(s), test command.
+
 ## Dependencies
 
 TBD — decided by the user.

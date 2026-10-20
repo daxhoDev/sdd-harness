@@ -16,6 +16,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 6. **Each agent receives only the context it needs** to do its job — nothing more.
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
 8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§4.5). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
+9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§4.6).
 
 Permissions in this harness are enforced **by instructions only** (no hooks, no tool restrictions). Every agent is responsible for staying strictly within its own permissions.
 
@@ -35,6 +36,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Gives each subagent only the context it needs (golden rule 6).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
+- Before the first hand-off to the Implementer in each phase, runs the environment preflight gate; if it fails, stops everything and reports the summary to the user (§4.6).
 - At phase/task close, runs the closing sequence (§4.3).
 - Always reports the current position in the cycle (§7.2).
 - Reports subagent hand-offs and returns in the standard short format only, never narrating them (§7.3).
@@ -46,12 +48,12 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 
 ### 2.2 Specifier — summary
 
-Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever. Never writes code or tests.
+Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Specs the environment preflight script once the stack is decided (§4.6). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever. Never writes code or tests.
 Full definition: [`.claude/agents/specifier.md`](.claude/agents/specifier.md).
 
 ### 2.3 Implementer — summary
 
-Reads all the documentation it is pointed to, reports anything that does not fit **before** writing code, then implements what is documented. Writes code (including test infrastructure such as runner config and dev dependencies, as specified). Never writes in `docs/`, never writes tests, never commits.
+Reads all the documentation it is pointed to, reports anything that does not fit **before** writing code, then implements what is documented. Writes code (including test infrastructure such as runner config and dev dependencies, as specified, and the environment preflight script, §4.6). Never writes in `docs/`, never writes tests, never commits.
 Full definition: [`.claude/agents/implementer.md`](.claude/agents/implementer.md).
 
 ### 2.4 Reviewer — summary
@@ -96,6 +98,9 @@ User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
          Manager creates task branch from `development`
+            │
+            ▼
+         Manager runs the preflight gate, each phase (§4.6) ── fails? ──► everything stops, Manager ──► User
             │
             ▼
          Implementer reads docs ── doesn't fit? ──► Manager ──► Specifier ──► User approval (loop)
@@ -169,6 +174,42 @@ Requester (Specifier | Implementer | Reviewer | Manager)
 - When the Manager is the requester, it uses the report only to ask the user better-informed questions (§7.1). The user's decisions go to the Specifier as part of the refined input.
 - Research findings never enter the docs directly. The Specifier turns them into options in a Decisions report, and only the option the user chooses is written. Specs do not record source URLs.
 
+### 4.6 Environment preflight
+
+The environment preflight is a health-check script that keeps the harness from working on a broken environment (golden rule 9).
+
+**Creation.** The moment the Stack in `CONVENTIONS.md` is decided, the Specifier adds the script as the **first phase of that same task**, on the same task branch. It is a normal SDD phase:
+
+- **Spec:** a dedicated module `ENV.md` (module code `ENV`), proposed for the user's approval like any new file (§6.1). Its requirements and acceptance criteria cover the four checks and the exit-code contract below, so the Reviewer derives tests from them.
+- **Parameters:** the `Environment preflight` section of `CONVENTIONS.md` records the script path and name, the variant(s), the runtime(s), their minimum version(s) and the test command. The minimum versions are put to the user as options.
+- The Implementer writes the script; the Reviewer reviews it, tests it and commits it.
+
+**Variants.** The script depends on the OS: a Bash script (`preflight.sh`) on Unix/macOS and a PowerShell script (`preflight.ps1`) on Windows. The Specifier specs which variant(s) are needed. The Manager runs the variant for the OS it is running on.
+
+**Checks**, in order:
+
+1. The runtime is installed.
+2. It meets the minimum required version.
+3. The test suite passes, if one exists. No suite yet means `SKIPPED`, not failed.
+4. A readable status summary, stating the result of each check (`PASS` | `FAIL` | `SKIPPED`).
+
+**Exit-code contract:** exit `0` only when every check passed (a skipped suite still passes); non-zero if any of checks 1–3 fails.
+
+**The gate.** Before the first hand-off to the Implementer in each phase, the Manager runs the script:
+
+- Exit `0`: the phase goes ahead.
+- Non-zero: everything stops. Nothing is implemented, changed or committed, and the Manager reports the summary to the user.
+- The gate is not run again inside the Implementer ↔ Reviewer loop of the same phase (failing tests there are work in progress, and the Reviewer runs them), nor before the commit.
+- It is an automatic gate, not a numbered approval stop (§3).
+- It activates only once the script exists: the bootstrap and the phase that first creates the script are not gated; every later phase is.
+
+**After a failure:**
+
+- **Check 1 or 2 failed** (environment): the user fixes the environment and asks the Manager to retry; the Manager runs the gate again.
+- **Check 3 failed** (tests): the Manager proposes a **repair task** to fix the failing tests. With the user's explicit approval, it runs through the normal SDD flow. Its gate requires only checks 1–2 to pass, as read from the summary; check 3 must pass again by the end of the repair task.
+
+**Maintenance.** When the stack, a minimum version or the test command changes, the Specifier updates `ENV.md` and `CONVENTIONS.md` and includes the script update in its reading instructions for the Implementer, in the same task.
+
 ---
 
 ## 5. Git
@@ -235,7 +276,7 @@ Each spec module holds all the information about its module. Every spec module f
 
 ### 6.4 CONVENTIONS.md
 
-Project-wide conventions, filled in as the user decides them. It is the only non-spec doc that is versioned (`vX.Y`), starting at `v0.1`; its version is shown in its header and in its `MAIN.md` index row. Test file locations and naming are defined **only** here.
+Project-wide conventions, filled in as the user decides them. It is the only non-spec doc that is versioned (`vX.Y`), starting at `v0.1`; its version is shown in its header and in its `MAIN.md` index row. Test file locations and naming are defined **only** here, as are the environment preflight parameters (§4.6).
 
 ### 6.5 CHANGELOG.md
 
@@ -304,7 +345,8 @@ The Manager never narrates subagent work (what an agent is about to do, is doing
 
 - `<report name>` is the report the agent returned, as named in its agent file (e.g. `Decisions report`, `Done report`, `Review report`).
 - `<outcome>` is a short enum: the report's verdict when it has one (e.g. `PASS`, `FAIL`, `BLOCKED`), otherwise `OK`, or a count of what needs attention (e.g. `2 decisions`, `2 gaps`).
-- Everything after a `←` line is only what the user must read or act on: pending decisions (§7.1), approval stops (§3), research approvals and the Researcher report summary (§4.5). Anything that needs no action from the user is not expanded.
+- Everything after a `←` line is only what the user must read or act on: pending decisions (§7.1), approval stops (§3), research approvals and the Researcher report summary (§4.5), and a failed preflight summary (§4.6). Anything that needs no action from the user is not expanded.
+- The preflight gate (§4.6) is one line too: `▸ preflight · PASS` or `▸ preflight · FAIL (check <n>)`. In the chain line it appears as `preflight ✓` or `preflight ✗`.
 
 **Message to the user.** When the Manager returns to the user after one or more hand-offs, the message starts with the status line (§7.2), then a single chain line summarising every hand-off since its previous message, instead of repeating the `→`/`←` lines:
 
@@ -318,7 +360,7 @@ Example:
 
 ```
 auth-login · Phase PH-AUTH-2 · Reviewer · iteration 2
-Specifier ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓
+Specifier ✓ → preflight ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓
 ```
 
 followed by the STOP 2 question with its options.
