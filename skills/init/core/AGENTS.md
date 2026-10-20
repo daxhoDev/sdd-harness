@@ -339,9 +339,18 @@ While research is being approved, run or reported (§4.5), `<agent>` is `Researc
 The Manager never narrates subagent work (what an agent is about to do, is doing, or did). Every hand-off and every return is one fixed line:
 
 ```
-→ <agent> · <task in a few words> (<files the agent is pointed to>)
-← <agent> · <report name> · <outcome>
+→ <emoji> <agent> · <task in a few words> (<files the agent is pointed to>)
+← <emoji> <agent> · <report name> · <outcome>
 ```
+
+- `<emoji>` is the colored circle matching the agent's color. The source of truth is the `color` field in the frontmatter of the agent's file under `.claude/agents/`; the emoji always matches it, and if a color changes, the emoji changes with it:
+
+  | Agent | Color | Emoji |
+  |---|---|---|
+  | Specifier | `blue` | 🔵 |
+  | Implementer | `green` | 🟢 |
+  | Reviewer | `orange` | 🟠 |
+  | Researcher | `purple` | 🟣 |
 
 - `<report name>` is the report the agent returned, as named in its agent file (e.g. `Decisions report`, `Done report`, `Review report`).
 - `<outcome>` is a short enum: the report's verdict when it has one (e.g. `PASS`, `FAIL`, `BLOCKED`), otherwise `OK`, or a count of what needs attention (e.g. `2 decisions`, `2 gaps`).
@@ -351,7 +360,7 @@ The Manager never narrates subagent work (what an agent is about to do, is doing
 **Message to the user.** When the Manager returns to the user after one or more hand-offs, the message starts with the status line (§7.2), then a single chain line summarising every hand-off since its previous message, instead of repeating the `→`/`←` lines:
 
 ```
-<agent> <✓|✗> [(<outcome>)] → <agent> <✓|✗> [(<outcome>)] → …
+<emoji> <agent> <✓|✗> [(<outcome>)] → <emoji> <agent> <✓|✗> [(<outcome>)] → …
 ```
 
 `✓` means the agent finished with nothing blocking; `✗` means it returned something to resolve (the outcome says what). Then comes only the content the user must act on, and finally the list of trivial decisions taken (golden rule 2), if any.
@@ -360,12 +369,12 @@ Example:
 
 ```
 auth-login · Phase PH-AUTH-2 · Reviewer · iteration 2
-Specifier ✓ → preflight ✓ → Implementer ✓ → Reviewer ✗ (2 gaps) → Implementer ✓ → Reviewer ✓
+🔵 Specifier ✓ → preflight ✓ → 🟢 Implementer ✓ → 🟠 Reviewer ✗ (2 gaps) → 🟢 Implementer ✓ → 🟠 Reviewer ✓
 ```
 
 followed by the STOP 2 question with its options.
 
-Arrows, check marks, agent names and report names are fixed and in English; any free text stays in the user's language (§8).
+Arrows, check marks, emojis, agent names and report names are fixed and in English; any free text stays in the user's language (§8).
 
 ---
 
