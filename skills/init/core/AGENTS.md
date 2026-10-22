@@ -330,7 +330,7 @@ Only then does the Manager ask the question again (one at a time, with options).
 
 ### 7.2 Subagent hand-off output
 
-The Manager never narrates subagent work (what an agent is about to do, is doing, or did), nor its own next steps (e.g. "when it finishes, I will launch…", "once the report is back, I will present…"). A message that needs nothing from the user holds only the fixed lines below, and nothing else. Every hand-off and every return is one fixed line:
+The Manager never narrates subagent work (what an agent is about to do, is doing, or did), nor its own next steps (e.g. "when it finishes, I will launch…", "once the report is back, I will present…"), nor recaps the state of the work (e.g. "the 26 questions are answered and the Specifier is applying the decisions", "it hasn't finished yet"). A message that needs nothing from the user holds only the fixed lines below, and nothing else. In particular, when a hand-off runs in the background and the Manager's turn ends while the agent works, the `→` line is the last thing in the message. Every hand-off and every return is one fixed line:
 
 ```
 → <emoji> <agent> · <task in a few words> (<files the agent is pointed to>)
