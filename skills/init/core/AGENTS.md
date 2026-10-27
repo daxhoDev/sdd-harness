@@ -35,6 +35,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Gives every option a plain-language description of what it means for the user, and explains any question the user asks about at a mid-level developer depth before asking it again (§7.1).
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
 - Gives each subagent only the context it needs (golden rule 6).
+- Keeps one instance per subagent role within a phase, continuing it instead of launching a new one, and sends a continued instance only what is new (§4.8).
 - Runs the bootstrap task when the user starts it with `/sdd-harness:bootstrap`, including the migration of an existing project, and starts no other task while it is pending (§10). In the first session after a harness update, runs the `chore/sdd-update` task (§10.3).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
@@ -236,6 +237,16 @@ A task the user marks `sdd: false` skips the full flow. It is meant for trivial 
 4. The Reviewer reviews (and runs or writes tests) only if the Manager judges it necessary (e.g. the change may break existing tests).
 5. **Stop:** the Manager shows the user the result (files changed and, if any, docs changed) and the user gives the OK or requests changes.
 6. **Close.** If docs changed, the Specifier records their approval (§4.2), adds the CHANGELOG entries (§6.5, with the task in place of the phase) and brings `README.md` in sync (§6.7); otherwise there is no CHANGELOG entry and the README is untouched. The Reviewer commits on the task branch.
+
+### 4.8 Subagent instances
+
+To save tokens without losing quality, an agent's context is reused while it is still relevant and dropped once it goes stale:
+
+- **One instance per role and phase.** Within a phase, the Manager keeps one instance of each subagent role and **continues** it (instead of launching a new one) for every later hand-off of that role in the same phase: decision loops, fixes, re-reviews, recording the approval, the close and the commit. The Specifier's pass before STOP 1 and the approval recording (§4.2) belong to the task's first phase. In an `sdd: false` task, the whole task counts as one phase.
+- **Fresh instances.** Every new task and every new phase starts new instances. The Researcher gets a new instance for each research request; follow-up questions on the same request continue it.
+- **Orders to a continued instance** carry only what is new: the user's answers, the findings, a Researcher report, and the list of files other agents changed since its last turn. They never repeat docs or instructions the instance already has.
+- **Re-reading.** A continued instance re-reads every file in that list before acting (e.g. the Reviewer re-reads the code the Implementer fixed; the Implementer re-reads the docs the Specifier changed), and nothing else it has already read.
+- **Exceptions.** The Manager launches a new instance, with the full order, when the previous one can no longer be continued (e.g. a new session) or its context has been compacted.
 
 ---
 

@@ -187,6 +187,12 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 - **Alert:** before launching anything for a `sdd: false` task, and whenever it surfaces later, the Manager alerts the user if the task deserves the full flow (it adds or changes requirements or behaviour, needs a non-trivial decision, a new `docs/sdd/` file, spans several modules, or needs research), with the full flow as the recommended option; the user decides.
 - **Flow:** every other rule still applies. The Manager calls only the subagents needed: task branch from `development` and preflight gate as usual; the Specifier updates only the docs the change touches (no STOP 1; a non-trivial decision triggers the alert); the Implementer implements the Manager's order; the Reviewer reviews only if the Manager judges it necessary. One stop: the user gives the OK on the result. Close: if docs changed, the Specifier records their approval, adds the CHANGELOG entries and syncs `README.md` (otherwise no entry and no README change); the Reviewer commits.
 
+### 3.4 Subagent instances
+- To save tokens without losing quality, the Manager keeps **one instance per subagent role within a phase** and continues it for every later hand-off of that role in the phase (decision loops, fixes, re-reviews, approval recording, close, commit). The Specifier's pass before STOP 1 and the approval recording belong to the first phase; an `sdd: false` task counts as one phase.
+- Every new task and new phase starts new instances. The Researcher gets one instance per research request (follow-ups on it continue it).
+- Orders to a continued instance carry only what is new (answers, findings, reports) plus the files other agents changed since its last turn; the instance re-reads those files, and nothing else it already read.
+- A new instance with the full order is launched when the previous one cannot be continued (e.g. a new session) or its context was compacted.
+
 ---
 
 ## 4. Git
