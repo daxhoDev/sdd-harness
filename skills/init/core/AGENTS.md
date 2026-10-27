@@ -34,7 +34,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Gives every option a plain-language description of what it means for the user, and explains any question the user asks about at a mid-level developer depth before asking it again (§7.1).
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
 - Gives each subagent only the context it needs (golden rule 6).
-- In the first session after installation, runs the bootstrap task, including the migration of an existing project (§10).
+- In the first session after installation, runs the bootstrap task, including the migration of an existing project (§10). In the first session after a harness update, runs the `chore/sdd-update` task (§10.3).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
 - Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
 - Before the first hand-off to the Implementer in each phase, runs the environment preflight gate; if it fails, stops everything and reports the summary to the user (§4.6).
@@ -389,7 +389,7 @@ Arrows, check marks, emojis, agent names and report names are fixed and in Engli
 
 ## 10. Bootstrap
 
-The harness is installed by the plugin's `init` skill, which only copies files and moves aside every file it replaces (renamed to `<file>.pre-sdd`): it creates no branch and makes no commit. The first Manager session afterwards (recognised because `docs/sdd/CHANGELOG.md` holds only the installation entry) runs the **bootstrap** as the first SDD task, `chore/sdd-bootstrap`. The installation entry records the project mode, `new` or `existing`, which selects §10.1 or §10.2. No spec is written for the harness itself: `AGENTS.md` is its definition.
+The harness is installed by the plugin's `init` skill, which only copies files and moves aside every file it replaces (renamed to `<file>.pre-sdd`): it creates no branch and makes no commit. The first Manager session afterwards (recognised because `docs/sdd/CHANGELOG.md` holds only the installation entry and, if the harness was updated before the bootstrap, harness update entries) runs the **bootstrap** as the first SDD task, `chore/sdd-bootstrap`. The installation entry records the project mode, `new` or `existing`, which selects §10.1 or §10.2. No spec is written for the harness itself: `AGENTS.md` is its definition.
 
 ### 10.1 New project
 
@@ -416,3 +416,15 @@ Everything the project already holds is rewritten in the harness format without 
 5. **STOP:** the only approval of the bootstrap. The user approves the whole result (harness files, migrated docs, new files, originals to delete, open points) or requests changes (loop to step 3).
 6. **Close.** The Specifier records the approval (§4.2; a module with open points stays `Draft`), sets every `PH-<CODE>-1` to `Done`, deletes the originals approved for deletion (they remain in the git history), and adds the CHANGELOG entries. The Reviewer commits everything on `chore/sdd-bootstrap`.
 7. If the Stack was filled in, the environment preflight phase follows in the same task, through the normal flow (§4.6). Then the Manager waits for the user's first input, and does not interview the user about the project until they provide it.
+
+### 10.3 Harness update
+
+The plugin's `update` skill brings the harness files up to the latest version published on GitHub, merging them with the project's own changes (conflicts are resolved with the user). Like `init`, it only changes files: it creates no branch and makes no commit, and it adds a CHANGELOG entry `SDD harness updated (sdd-harness v<OLD> → v<NEW>)`. Spec modules are never touched by it.
+
+The first Manager session afterwards (recognised because that entry is still uncommitted in the working tree) runs the update as an SDD task, `chore/sdd-update-v<NEW>`. If the bootstrap has not run yet, the bootstrap runs instead and covers the update.
+
+1. The Manager creates the task branch from `development` (the uncommitted changes carry over).
+2. The Reviewer verifies the updated harness files against this file, and every existing doc in `docs/sdd/` against the current rules (§6) and `_TEMPLATE.md` (structure and compliance only, no tests). Every doc that no longer complies is a spec gap.
+3. Spec gaps go to the Specifier, through the normal flow (§4.1): form adaptations are trivial decisions; anything else is put to the user. The Reviewer checks again (loop).
+4. **Stop:** the user approves or requests changes.
+5. The Reviewer commits everything on the task branch. Then the Manager waits for the user's next input.

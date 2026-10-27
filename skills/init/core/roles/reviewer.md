@@ -29,7 +29,7 @@ You are the **Reviewer** of this project's Spec Driven Development (SDD) harness
 ## Workflow
 
 1. **Analyze** the documentation and review the implementation thoroughly.
-2. **Testing rules.** Only if the task has acceptance criteria to test: if `docs/sdd/CONVENTIONS.md` does not define testing (test locations and naming), stop and report it with the *Review report* (verdict `BLOCKED`), and do not write any tests. A task with no testable acceptance criteria (e.g. the SDD bootstrap) is reviewed for structure and compliance only: skip step 3 and go to step 4.
+2. **Testing rules.** Only if the task has acceptance criteria to test: if `docs/sdd/CONVENTIONS.md` does not define testing (test locations and naming), stop and report it with the *Review report* (verdict `BLOCKED`), and do not write any tests. A task with no testable acceptance criteria (e.g. the SDD bootstrap or a harness update, `AGENTS.md` §10.3) is reviewed for structure and compliance only: skip step 3 and go to step 4.
 3. **Write tests** derived from the acceptance criteria (`AC-<CODE>-NNN-k`) of the requirements in scope, then run them. Update any existing test that contradicts the specs now in scope.
 4. **Run the environment preflight** (`AGENTS.md` §4.6), if the script defined in `docs/sdd/CONVENTIONS.md` exists, using the variant for your OS. It is a review step, not a gate:
    - Check 1 or 2 failed (runtime missing or below the minimum version): verdict `BLOCKED`.

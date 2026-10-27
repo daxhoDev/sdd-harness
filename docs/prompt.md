@@ -292,3 +292,7 @@ Treat the bootstrap as the first SDD task:
    - **Stop** — the single approval: the user approves the whole result. The Specifier records the approval, sets `PH-<CODE>-1` to `Done`, deletes the approved originals (its only write outside `docs/` and the process files; they remain in the git history) and adds the CHANGELOG entries; the Reviewer commits.
    - If the Stack was filled in, the environment preflight phase follows (§3.2).
 6. Then wait for the user's first input. Do not interview the user about the project until they provide it.
+
+## 10. Harness updates
+
+The plugin's `update` skill updates an installed harness to the latest version on GitHub, merging it with the project's own changes (three-way merge against the installed version's templates; conflicts are resolved with the user). It only changes files, never touches spec modules, and adds a CHANGELOG entry `SDD harness updated (sdd-harness v<OLD> → v<NEW>)`. In the next session the Manager runs the update as an SDD task, `chore/sdd-update-v<NEW>`: the Reviewer verifies the updated files and every existing doc against the new rules (structure and compliance only), non-compliant docs go to the Specifier through the normal flow, the user approves, and the Reviewer commits. If the bootstrap has not run yet, it covers the update.

@@ -29,7 +29,7 @@ The first command adds this GitHub repository as a plugin marketplace; the secon
 /plugin marketplace update daxhodev
 ```
 
-Updating the plugin does not touch projects you already initialized: their files were copied and are yours to edit.
+Updating the plugin does not touch projects you already initialized: their files were copied and are yours to edit. To update the harness inside a project, see [Update a project](#update-a-project).
 
 ### Uninstall
 
@@ -67,22 +67,39 @@ It welcomes you and asks one question: new project or existing project. If you c
 
 In the next session, the Manager runs the bootstrap as the first SDD task (`chore/sdd-bootstrap`). In a new project it commits the harness files after your OK. In an existing project the Specifier first reads the whole repository (docs, specs from tools such as spec-kit, Kiro or OpenSpec, and the code) and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
 
+## Update a project
+
+In a project that already has the harness:
+
+```
+/sdd-harness:update
+```
+
+It downloads the latest version of the harness from this GitHub repository (no marketplace update needed; it needs network and git) and merges it into the project's harness files, keeping your own changes. It asks you only when your changes and the new version touch the same text. Your spec modules are never touched, and `CHANGELOG.md` gets an entry for the update. If the harness is not installed, it says so and offers to install it (the latest version); if you decline, it stops.
+
+Like `init`, it creates no branches and makes no commits. In the next session the Manager runs the `chore/sdd-update-v<version>` task: the Reviewer checks the updated files and your existing docs against the new rules, and everything is committed after your OK.
+
+Each release is tagged `v<version>` so the update can find the version a project was installed with.
+
 ## Layout
 
 ```
 .claude-plugin/
 ├── plugin.json
 └── marketplace.json          # this repo is its own marketplace
-skills/init/
-├── SKILL.md
-├── core/                     # agent-neutral templates
-│   ├── AGENTS.md
-│   ├── docs/sdd/...
-│   └── roles/<role>.md       # body of each subagent role
-└── adapters/
-    └── claude-code/          # Claude Code adapter
-        ├── CLAUDE.md
-        └── agents/<role>.frontmatter.md
+skills/
+├── init/
+│   ├── SKILL.md              # installs the harness
+│   ├── core/                 # agent-neutral templates
+│   │   ├── AGENTS.md
+│   │   ├── docs/sdd/...
+│   │   └── roles/<role>.md   # body of each subagent role
+│   └── adapters/
+│       └── claude-code/      # Claude Code adapter
+│           ├── CLAUDE.md
+│           └── agents/<role>.frontmatter.md
+└── update/
+    └── SKILL.md              # updates an installed harness from GitHub
 docs/
 └── prompt.md                 # reference prompt the harness was built from
 ```
