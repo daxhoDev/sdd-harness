@@ -285,7 +285,7 @@ Every deviation is also propagated to all affected docs so that no document cont
 
 ## 9. Bootstrap (what to do now)
 
-Treat the bootstrap as the first SDD task:
+Treat the bootstrap as the first SDD task. In a project installed with the plugin, the user starts it with `/sdd-harness:bootstrap` after restarting Claude Code, and the Manager starts no other task while it is pending:
 1. **Specifier** drafts `AGENTS.md`, `CLAUDE.md`, `.claude/agents/specifier.md`, `.claude/agents/implementer.md`, `.claude/agents/reviewer.md`, `.claude/agents/researcher.md`, and the `docs/sdd/` skeleton (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`), following the rules above.
    - No spec is written for the harness itself (`AGENTS.md` is its definition).
    - The CHANGELOG gets one entry, "SDD harness bootstrapped", referencing `AGENTS.md` and the skeleton.
@@ -302,4 +302,4 @@ Treat the bootstrap as the first SDD task:
 
 ## 10. Harness updates
 
-The plugin's `update` skill updates an installed harness to the latest version on GitHub, merging it with the project's own changes (three-way merge against the installed version's templates; conflicts are resolved with the user). It only changes files, never touches spec modules, and adds a CHANGELOG entry `SDD harness updated (sdd-harness v<OLD> → v<NEW>)`. In the next session the Manager runs the update as an SDD task, `chore/sdd-update-v<NEW>`: the Reviewer verifies the updated files and every existing doc against the new rules (structure and compliance only), non-compliant docs go to the Specifier through the normal flow, the user approves, and the Reviewer commits. If the bootstrap has not run yet, it covers the update.
+The plugin's `update` skill updates an installed harness to the latest version on GitHub, merging it with the project's own changes (three-way merge against the installed version's templates; conflicts are resolved with the user). It only changes files, never touches spec modules, and adds a CHANGELOG entry `SDD harness updated (sdd-harness v<OLD> → v<NEW>)`. In the next session the Manager runs the update as an SDD task, `chore/sdd-update-v<NEW>`: the Reviewer verifies the updated files and every existing doc against the new rules (structure and compliance only), non-compliant docs go to the Specifier through the normal flow, the user approves, and the Reviewer commits. If the bootstrap has not run yet, the bootstrap (`/sdd-harness:bootstrap`) covers the update.

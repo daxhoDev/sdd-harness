@@ -65,7 +65,13 @@ The skill only copies files:
 
 It welcomes you and asks one question: new project or existing project. If you choose "new" but the project already has docs or code, it tells you and treats it as existing, so nothing you have is lost. It creates no branches and makes no commits, and asks about git only if the project is not a repository or has no commits. A file it would replace (e.g. an existing `CLAUDE.md`) is renamed to `<file>.pre-sdd` instead of being overwritten.
 
-In the next session, the Manager runs the bootstrap as the first SDD task (`chore/sdd-bootstrap`). In a new project it commits the harness files after your OK. In an existing project the Specifier first reads the whole repository (docs, specs from tools such as spec-kit, Kiro or OpenSpec, and the code) and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
+Then restart Claude Code in the project (the subagents and `AGENTS.md` load only in a new session) and start the bootstrap, the first SDD task (`chore/sdd-bootstrap`):
+
+```
+/sdd-harness:bootstrap
+```
+
+Until the bootstrap has run, the Manager starts no other task. In a new project it commits the harness files after your OK. In an existing project the Specifier first reads the whole repository (docs, specs from tools such as spec-kit, Kiro or OpenSpec, and the code) and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
 
 ### Lightweight tasks
 
@@ -102,6 +108,8 @@ skills/
 │       └── claude-code/      # Claude Code adapter
 │           ├── CLAUDE.md
 │           └── agents/<role>.frontmatter.md
+├── bootstrap/
+│   └── SKILL.md              # starts the bootstrap task
 └── update/
     └── SKILL.md              # updates an installed harness from GitHub
 docs/

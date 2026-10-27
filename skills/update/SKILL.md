@@ -46,5 +46,5 @@ Paths below are relative to a checkout of the harness repository (`skills/init/.
    - the versions (`v<OLD>` → `v<NEW>`) and the main changes of the harness between them (from the commit subjects in `<checkout>`, `git log --format=%s <base commit>..HEAD`);
    - the files created, merged, kept or deleted, and the conflicts resolved;
    - that nothing was committed and no branch was created;
-   - that the new rules and subagents load in a new session (restart Claude Code in this project), where the Manager runs the `chore/sdd-update` task (`AGENTS.md` §10.3): the Reviewer checks the updated files and the existing docs against the new rules, and everything is committed after the user's OK. If the bootstrap has not run yet, the bootstrap covers the update instead.
+   - that the new rules and subagents load in a new session (restart Claude Code in this project), where the Manager runs the `chore/sdd-update` task (`AGENTS.md` §10.3): the Reviewer checks the updated files and the existing docs against the new rules, and everything is committed after the user's OK. If the bootstrap has not run yet, there is no update task: `/sdd-harness:bootstrap` covers the update.
 9. **Clean up.** Remove the worktree (`git worktree remove`) and the temporary directory, whatever the outcome.

@@ -35,9 +35,9 @@ No other placeholder exists; every other file is copied unchanged.
 
 ## Steps
 
-1. **Welcome.** Greet the user and explain in two or three lines what is about to happen: the harness (a Spec Driven Development workflow with a Manager and four subagents) is installed by copying files; nothing is committed; the next session starts the bootstrap task. Then ask the only mode question:
+1. **Welcome.** Greet the user and explain in two or three lines what is about to happen: the harness (a Spec Driven Development workflow with a Manager and four subagents) is installed by copying files; nothing is committed; after restarting Claude Code, `/sdd-harness:bootstrap` starts the bootstrap task. Then ask the only mode question:
    - **New project** — starting from scratch: the harness templates are applied as they are.
-   - **Existing project** — the project already has code or documentation: in the next session everything already there is read and rewritten in the harness format as the first SDD task, for the user's approval. No information is lost.
+   - **Existing project** — the project already has code or documentation: in the bootstrap everything already there is read and rewritten in the harness format as the first SDD task, for the user's approval. No information is lost.
 2. **Git check.** Run `git rev-parse --is-inside-work-tree` and `git rev-parse HEAD` in the project root. Only if the project is not a git repository, or has no commits, ask one question: run `git init` and/or make an initial commit before continuing (recommended), or stop. Do only what the user chooses.
 3. **Mode check.** List the project's files with `git ls-files --cached --others --exclude-standard` (or, without git, every file except `.git/`). Any file that is not a target file means the project already has content.
    - Mode `new` with existing content: tell the user what was found (a short summary, not the full list) and that the project is therefore treated as existing, so nothing they already have is lost. Do not ask again; the mode is `existing`.
@@ -49,5 +49,5 @@ No other placeholder exists; every other file is copied unchanged.
    - the mode (and, if it changed from the user's choice, why);
    - the files created, and any file renamed to `.pre-sdd`;
    - that nothing was committed and no branch was created;
-   - that the subagents load in a new session (restart Claude Code in this project);
-   - what the next session does (`AGENTS.md` §10): in a new project, the Manager commits the harness files on `chore/sdd-bootstrap` after the user's OK; in an existing project, the Specifier first reads the whole repository and rewrites what is there (docs and the knowledge evident in the code) in the harness format, asking the user only about divergences, and everything is committed after a single approval of the result.
+   - the next step: restart Claude Code in this project (the subagents and `AGENTS.md` load only in a new session) and run `/sdd-harness:bootstrap`;
+   - what the bootstrap does (`AGENTS.md` §10): in a new project, the Manager commits the harness files on `chore/sdd-bootstrap` after the user's OK; in an existing project, the Specifier first reads the whole repository and rewrites what is there (docs and the knowledge evident in the code) in the harness format, asking the user only about divergences, and everything is committed after a single approval of the result.
