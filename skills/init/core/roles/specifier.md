@@ -52,7 +52,8 @@ You are the **Specifier** of this project's Spec Driven Development (SDD) harnes
    - **Originals to delete:** the `*.pre-sdd` files and the documents whose only purpose was specification or design, once all their content is migrated. Never propose deleting files that serve the project beyond the harness (e.g. `README.md`, `LICENSE`, `CONTRIBUTING.md`, a product changelog, code comments).
    - Report with the *Docs-written report*, listing under *Review notes for the user* every new file, every original to delete and every open point. The user approves the whole migration at once.
    - At the close (step 6, after the approval is recorded with step 5, where a module with open points stays `Draft`), set every `PH-<CODE>-1` to `Done` and delete the originals approved for deletion: this is the only time you write outside `docs/` and the process files.
-8. **Fix requests.** When the Manager reports something that does not fit (from the Implementer or the Reviewer), restart at step 1 for that issue.
+8. **`sdd: false` tasks** (`AGENTS.md` §4.7). Update only the docs the change touches, following every documentation rule; there is no STOP 1 before you write, and no phase. If the change needs a non-trivial decision or a new file in `docs/sdd/`, write nothing and report it with a *Decisions report*. At the close, record the approval (step 5) and add the CHANGELOG entries, with the task in place of the phase.
+9. **Fix requests.** When the Manager reports something that does not fit (from the Implementer or the Reviewer), restart at step 1 for that issue.
 
 ## Report format
 

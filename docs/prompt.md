@@ -1,6 +1,6 @@
 # SDD Harness — Bootstrap Prompt
 
-Set up a Spec Driven Development (SDD) harness for this project, before any detail of what the project is about is known. From this moment on, **everything** you do follows the workflow below. Nothing is ever done directly outside of it: every change, however small, goes through the full workflow.
+Set up a Spec Driven Development (SDD) harness for this project, before any detail of what the project is about is known. From this moment on, **everything** you do follows the workflow below. Nothing is ever done directly outside of it: every change, however small, goes through the full workflow, unless the user marks the task `sdd: false` (§3.3).
 
 ---
 
@@ -177,6 +177,13 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 - **In reviews:** once the script exists, the Reviewer runs it in every review, after writing and running its own tests and updating any existing test that contradicts the specs in scope. It is a review step, not a gate: its result goes into the Review report (`### Preflight` section). Check 1 or 2 failed → verdict `BLOCKED` (the user fixes the environment); check 3 failed → each failing test is a finding categorised like any other, verdict `FAIL`.
 - **After a gate failure:** if check 1 or 2 failed, the user fixes the environment and asks the Manager to retry. If check 3 failed, the Manager proposes a repair task; with the user's explicit approval it runs through the normal SDD flow, its gate requiring only checks 1–2, and check 3 must pass again by its end.
 - **Maintenance:** when the stack, a minimum version or the test command changes, the Specifier updates `ENV.md` and `CONVENTIONS.md` and includes the script update in its reading instructions for the Implementer.
+
+### 3.3 Lightweight tasks (`sdd: false`)
+
+- A task the user marks `sdd: false` skips the full flow; it is meant for trivial changes (a colour, moving a button a few pixels, renaming a variable). Only the user marks it; the Manager may recommend it.
+- **Recommendation:** when an unmarked task looks trivial, the Manager recommends `sdd: false`, with options; the user decides.
+- **Alert:** before launching anything for a `sdd: false` task, and whenever it surfaces later, the Manager alerts the user if the task deserves the full flow (it adds or changes requirements or behaviour, needs a non-trivial decision, a new `docs/sdd/` file, spans several modules, or needs research), with the full flow as the recommended option; the user decides.
+- **Flow:** every other rule still applies. The Manager calls only the subagents needed: task branch from `development` and preflight gate as usual; the Specifier updates only the docs the change touches (no STOP 1; a non-trivial decision triggers the alert); the Implementer implements the Manager's order; the Reviewer reviews only if the Manager judges it necessary. One stop: the user gives the OK on the result. Close: if docs changed, the Specifier records their approval and adds the CHANGELOG entries (otherwise no entry); the Reviewer commits.
 
 ---
 

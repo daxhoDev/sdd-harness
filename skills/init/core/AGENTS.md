@@ -1,6 +1,6 @@
 # AGENTS.md — Project Guidance (SDD Harness)
 
-This project follows **Spec Driven Development (SDD)**. Every piece of work follows the workflow in §4. Nothing is ever done outside of it: every change, however small, goes through the full SDD flow.
+This project follows **Spec Driven Development (SDD)**. Every piece of work follows the workflow in §4. Nothing is ever done outside of it: every change, however small, goes through the full SDD flow, unless the user marks the task `sdd: false` (§4.7).
 
 This file holds the common rules, the Manager's rules, the workflow, and a summary of each subagent role. The detailed definition of each subagent role lives **only** in its agent file under `.claude/agents/` (see §9).
 
@@ -44,6 +44,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - **Always** asks the user before launching any research, explaining what will be researched and why. Nothing is ever launched without the user's approval. This is a mandatory approval that can happen at any point in the cycle (§4.5).
 - If the user declines a research request, puts to the user the question the research was meant to answer (one at a time, with options) and passes the user's answer to the requesting agent when re-launching it (§4.5).
 - Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it (§4.5).
+- Recommends running a task as `sdd: false` when it looks trivial, and alerts the user when a task marked `sdd: false` looks like it deserves the full flow; the user decides (§4.7).
 - Never writes or commits anything: no specs, docs, code or tests. Only the Reviewer commits (§5).
 
 ### 2.2 Specifier — summary
@@ -74,6 +75,8 @@ Approval stops are mandatory:
 
 1. After the Specifier's pass, before implementation: the user approves the specs or requests changes.
 2. After review, before closing a phase/task: the user gives the OK. No phase is ever closed without it.
+
+A task marked `sdd: false` has only stop 2 (§4.7).
 
 ---
 
@@ -215,6 +218,23 @@ The environment preflight is a health-check script that keeps the harness from w
 - **Check 3 failed** (tests): the Manager proposes a **repair task** to fix the failing tests. With the user's explicit approval, it runs through the normal SDD flow. Its gate requires only checks 1–2 to pass, as read from the summary; check 3 must pass again by the end of the repair task.
 
 **Maintenance.** When the stack, a minimum version or the test command changes, the Specifier updates `ENV.md` and `CONVENTIONS.md` and includes the script update in its reading instructions for the Implementer, in the same task.
+
+### 4.7 Lightweight tasks (`sdd: false`)
+
+A task the user marks `sdd: false` skips the full flow. It is meant for trivial changes that do not justify its cost (e.g. changing a colour, moving a button a few pixels, renaming a variable). Only the user marks a task `sdd: false`; the Manager may recommend it.
+
+**Recommending it.** When the user gives a task not marked `sdd: false` and the Manager infers it is trivial enough to skip the full flow, it recommends running it as `sdd: false`, with options (§7.1): `sdd: false` or the full flow. The user decides.
+
+**Alerting.** Before launching anything for a task marked `sdd: false`, the Manager checks whether it deserves the full flow: it adds or changes requirements or behaviour, involves a non-trivial decision (golden rule 2), needs a new file in `docs/sdd/`, spans several modules, or needs research. If so, it alerts the user, with options: the full flow (recommended) or `sdd: false` anyway. The same alert is raised if any of this surfaces later in the task (e.g. a subagent reports a non-trivial decision); the user decides whether to switch to the full flow.
+
+**Flow.** Every other rule still applies (golden rules, permissions, git, preflight). The Manager calls only the subagents the task needs:
+
+1. The Manager refines the task only if it is ambiguous, creates the task branch from `development` (§5), and runs the preflight gate before the first hand-off to the Implementer (§4.6).
+2. **Docs.** If the change touches anything the docs describe, the Manager sends the Specifier to update only the affected docs, with no STOP 1 (the docs are approved at the stop below). A non-trivial decision returns a Decisions report and triggers the alert above. The rules of §6 still apply (e.g. a change to an approved spec is a deviation, §6.6).
+3. The Implementer implements what the Manager's order says, together with any docs it is pointed to.
+4. The Reviewer reviews (and runs or writes tests) only if the Manager judges it necessary (e.g. the change may break existing tests).
+5. **Stop:** the Manager shows the user the result (files changed and, if any, docs changed) and the user gives the OK or requests changes.
+6. **Close.** If docs changed, the Specifier records their approval (§4.2) and adds the CHANGELOG entries (§6.5, with the task in place of the phase); otherwise there is no CHANGELOG entry. The Reviewer commits on the task branch.
 
 ---
 

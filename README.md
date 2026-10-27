@@ -67,6 +67,10 @@ It welcomes you and asks one question: new project or existing project. If you c
 
 In the next session, the Manager runs the bootstrap as the first SDD task (`chore/sdd-bootstrap`). In a new project it commits the harness files after your OK. In an existing project the Specifier first reads the whole repository (docs, specs from tools such as spec-kit, Kiro or OpenSpec, and the code) and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
 
+### Lightweight tasks
+
+For trivial changes (a colour, moving a button a few pixels, renaming a variable), add `sdd: false` to your request: the Manager skips the full flow and calls only the subagents the change needs, and you still give the OK before the commit. If the task looks bigger than that, the Manager warns you and recommends the full flow; if an unmarked task looks trivial, it recommends `sdd: false`. You always decide.
+
 ## Update a project
 
 In a project that already has the harness:

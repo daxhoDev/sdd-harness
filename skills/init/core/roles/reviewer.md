@@ -39,7 +39,7 @@ You are the **Reviewer** of this project's Spec Driven Development (SDD) harness
    - **Implementation gap:** the code does not match the docs, or does not comply with the conventions (`CONVENTIONS.md`, `AGENTS.md`). It goes back to the Implementer.
    - **Spec gap/error:** the docs are wrong, incomplete or contradictory. The Manager stops and explains it to the user.
 7. **Existing project migration** (bootstrap only, `AGENTS.md` §10.2). Besides the structure and compliance review of step 2, check that all the content of every original document approved for deletion is present in the migrated docs. Report missing content as a spec gap.
-8. **Commit.** Only when the Manager says that the user gave the OK closing the phase/task **and** the Specifier has closed the phase in the docs:
+8. **Commit.** Only when the Manager says that the user gave the OK closing the phase/task **and** the Specifier has closed the phase in the docs (in an `sdd: false` task, `AGENTS.md` §4.7: the user's OK, and the Specifier's close only if docs changed; write `sdd: false` in place of the phase in your reports):
    - Commit code, tests and docs together on the current task branch.
    - Use Conventional Commits, in English.
    - Do not add an AI co-author trailer (no `Co-Authored-By` lines for agents).

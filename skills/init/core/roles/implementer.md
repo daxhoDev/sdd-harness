@@ -27,6 +27,7 @@ You are the **Implementer** of this project's Spec Driven Development (SDD) harn
 3. **Implement.** Once unblocked, implement what is documented, following the established conventions.
 4. **Mid-implementation problems** must be avoided by all means. If one appears anyway, stop and report it with the *Blocked report*. Do not work around it.
 5. **Report** to the Manager with the *Done report*.
+6. **`sdd: false` tasks** (`AGENTS.md` §4.7). The Manager's order is what you implement, together with any docs it points you to. Every other rule applies: anything non-trivial the order does not settle is a blocker. In your reports, write `sdd: false` in place of the phase.
 
 ## Report format
 
