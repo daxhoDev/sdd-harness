@@ -17,6 +17,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
 8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§4.5). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
 9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§4.6).
+10. **No AI attribution.** Nothing an agent writes carries a co-authorship or AI attribution mark: no `Co-Authored-By` lines for agents, no "Generated with…" footers or similar. This covers commit messages, pull request descriptions, tags and release notes, docs, `README.md`, code, comments and tests.
 
 Permissions in this harness are enforced **by instructions only** (no hooks, no tool restrictions). Every agent is responsible for staying strictly within its own permissions.
 
@@ -245,7 +246,7 @@ A task the user marks `sdd: false` skips the full flow. It is meant for trivial 
   - `development`: created from `master`. If it does not exist, the Manager asks the user before creating it. Merged into manually, by the user only.
   - **Task branches**: one per task, created by the Manager from `development` after STOP 1. Naming: `<type>/<short-kebab-description>`, where `<type>` is a Conventional Commits type (e.g. `feat/user-login`, `chore/sdd-bootstrap`).
 - **Commits:** only the Reviewer commits, on the task branch, after the user's OK closing a phase/task (§4.3). No other agent ever commits.
-- **Commit format:** [Conventional Commits](https://www.conventionalcommits.org/), in English. **No AI co-author trailer** (no `Co-Authored-By` lines for agents).
+- **Commit format:** [Conventional Commits](https://www.conventionalcommits.org/), in English. **No AI co-author trailer** (no `Co-Authored-By` lines for agents; golden rule 10).
 - **Push:** no agent ever pushes. The user pushes.
 - **Merges** to `development` and to `master` are done manually by the user only.
 

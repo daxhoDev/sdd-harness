@@ -15,6 +15,7 @@ Set up a Spec Driven Development (SDD) harness for this project, before any deta
 7. **The whole process is iterative and cyclic.** Every step, every phase, and the overall flow loop as many times as needed until everything is resolved.
 8. **Only the Researcher gathers information from outside the project.** Only the Researcher searches the internet, reads online docs or pages, or queries external APIs to learn something. Every other agent, the Manager included, requests research through the Manager (§3.1). Network access that is a side effect of a documented task (e.g. installing documented dependencies, running the app or the tests) remains allowed to the role doing that task.
 9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§3.2).
+10. **No AI attribution.** Nothing an agent writes carries a co-authorship or AI attribution mark: no `Co-Authored-By` lines for agents, no "Generated with…" footers or similar. This covers commit messages, pull request descriptions, tags and release notes, docs, `README.md`, code, comments and tests.
 
 ---
 
@@ -193,7 +194,7 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 - One branch per task, created by the Manager from `development`.
 - Branch naming: `<type>/<short-kebab-description>`, with the type from Conventional Commits (e.g. `feat/user-auth`, `chore/sdd-bootstrap`).
 - Commits: made **only** by the Reviewer, after the user's OK closing a phase/task.
-- Commit format: **Conventional Commits**, in English, **with no AI co-author trailer**.
+- Commit format: **Conventional Commits**, in English, **with no AI co-author trailer** (golden rule 10).
 - **No agent ever pushes.** The user pushes.
 - Merges to `development` and to `master` are done **manually by the user only**.
 - If `development` does not exist yet, the Manager asks the user before creating it.

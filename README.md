@@ -23,7 +23,7 @@ Every task follows the same loop:
 5. The Reviewer writes and runs tests derived from the acceptance criteria and checks compliance; gaps loop back to the Implementer, and spec errors come back to you.
 6. **Stop 2:** you give the OK to close the phase. The Specifier closes it in the docs (CHANGELOG, versions, `README.md`) and the Reviewer commits.
 
-Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. No agent ever pushes or merges; that stays with you.
+Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. No agent ever pushes or merges; that stays with you. Nothing the agents write (commits, PRs, docs, code) carries an AI co-author or attribution mark.
 
 ## Install
 
