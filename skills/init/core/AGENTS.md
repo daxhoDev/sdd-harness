@@ -19,7 +19,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§4.6).
 10. **No AI attribution.** Nothing an agent writes carries a co-authorship or AI attribution mark: no `Co-Authored-By` lines for agents, no "Generated with…" footers or similar. This covers commit messages, pull request descriptions, tags and release notes, docs, `README.md`, code, comments and tests.
 
-Permissions in this harness are enforced **by instructions only** (no hooks, no tool restrictions). Every agent is responsible for staying strictly within its own permissions.
+Permissions in this harness are enforced **by instructions**, with one exception: a hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks every `git push` and `git merge`, and every `git commit` not run by the Reviewer (§5). Every other permission has no hook or tool restriction behind it: every agent is responsible for staying strictly within its own permissions.
 
 ---
 
@@ -36,9 +36,10 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Relays the Specifier's reading instructions to the Implementer, and the full package (docs + instructions + implementation) to the Reviewer.
 - Gives each subagent only the context it needs (golden rule 6).
 - Keeps one instance per subagent role within a phase, continuing it instead of launching a new one, and sends a continued instance only what is new (§4.8).
-- Runs the bootstrap task when the user starts it with `/sdd-harness:bootstrap`, including the migration of an existing project, and starts no other task while it is pending (§10). In the first session after a harness update, runs the `chore/sdd-update` task (§10.3).
+- Runs the bootstrap task when the user starts it with `/sdd-harness:bootstrap`, including the migration of an existing project, and starts no other task while it is pending (§10). In the first session after a harness update, runs the `chore/sdd-update-v<NEW>` task (§10.3).
+- Runs one task at a time; resumes an open task in a new session, and drops a task only when the user decides it (§4.9).
 - Subagents are invoked only by the Manager, explicitly, as part of this workflow.
-- Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2); then creates the task branch from `development`, before handing off to the Implementer (§5).
+- Creates the task branch from `development` before the first hand-off of the task, so that nothing is ever written on `development` or `master` (§5). Right after the user approves the specs (STOP 1), sends the Specifier to record the approval in the docs (§4.2), before handing off to the Implementer.
 - Before the first hand-off to the Implementer in each phase, runs the environment preflight gate; if it fails, stops everything and reports the summary to the user (§4.6).
 - At phase/task close, runs the closing sequence (§4.3).
 - Reports subagent hand-offs and returns in the standard short format only, never narrating them (§7.2).
@@ -90,6 +91,9 @@ A task marked `sdd: false` has only stop 2 (§4.7).
 User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
+         Manager creates task branch from `development`
+            │
+            ▼
          Specifier (feasibility check)
             │  doubts/contradictions/decisions? ──► Manager ──► User ──► back to Specifier (loop)
             ▼
@@ -100,9 +104,6 @@ User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
          Specifier records the approval in the docs (§4.2)
-            │
-            ▼
-         Manager creates task branch from `development`
             │
             ▼
          Manager runs the preflight gate, each phase (§4.6) ── fails? ──► everything stops, Manager ──► User
@@ -130,7 +131,7 @@ User ──► Manager (refine: questions to the user, one at a time)
 
 ### 4.2 Recording spec approval
 
-Right after the user approves the specs (STOP 1, or any later approval of a spec change), and **before** the task branch is created, the Manager sends the Specifier to:
+Right after the user approves the specs (STOP 1, or any later approval of a spec change), and **before** the next hand-off to the Implementer, the Manager sends the Specifier to:
 
 - set every newly approved spec to Status `Approved` and version `v1.0`;
 - apply the version bump to every already `Approved` spec whose change the user has just approved (§6.3).
@@ -248,6 +249,20 @@ To save tokens without losing quality, an agent's context is reused while it is 
 - **Re-reading.** A continued instance re-reads every file in that list before acting (e.g. the Reviewer re-reads the code the Implementer fixed; the Implementer re-reads the docs the Specifier changed), and nothing else it has already read.
 - **Exceptions.** The Manager launches a new instance, with the full order, when the previous one can no longer be continued (e.g. a new session) or its context has been compacted.
 
+### 4.9 Open tasks: one at a time, resuming, dropping
+
+A task is **open** from the creation of its branch until its last phase is committed or the user drops it. There is no state file: where a task stands is read from git and the docs.
+
+- **One at a time.** While a task is open, the Manager starts no other. A new request is put to the user with options: finish the open task first (the new request is taken up after it), or drop the open task.
+- **Resuming.** When a session starts on a task branch, or the Manager's context has been compacted, the Manager reads where the task stands from the branch and its commits, the phase statuses and spec statuses in the docs, and the uncommitted changes (`git status`, `git diff --stat`):
+  - uncommitted docs only, specs not `Approved`: before STOP 1 (the Specifier's pass, or STOP 1 itself if the specs are written);
+  - specs `Approved`, the current phase not `Done`, no uncommitted code or tests: before implementation (preflight gate, then the Implementer);
+  - uncommitted code or tests: implementation or review (the Reviewer reviews the current state);
+  - the current phase `Done` in the docs but uncommitted: the commit is pending.
+
+  It tells the user, in one line, which task and step it read, and asks with options: continue from there (recommended) or drop the task. Every subagent gets a new instance with the full order (§4.8).
+- **Dropping.** Only the user drops a task. The Manager lists what would be lost (uncommitted changes, and commits on the task branch that are not in `development`) and, after the user's explicit OK, discards the uncommitted changes, switches to `development` and deletes the task branch. Nothing is recorded in the docs: whatever the task wrote lived only on its branch.
+
 ---
 
 ## 5. Git
@@ -255,11 +270,12 @@ To save tokens without losing quality, an agent's context is reused while it is 
 - **Branches**
   - `master`: merged into manually, by the user only.
   - `development`: created from `master`. If it does not exist, the Manager asks the user before creating it. Merged into manually, by the user only.
-  - **Task branches**: one per task, created by the Manager from `development` after STOP 1. Naming: `<type>/<short-kebab-description>`, where `<type>` is a Conventional Commits type (e.g. `feat/user-login`, `chore/sdd-bootstrap`).
+  - **Task branches**: one per task, created by the Manager from `development` before the first hand-off of the task, so specs are written on the task branch too. If the working tree has uncommitted changes the task did not make (the files written by a harness install or update belong to the bootstrap or update task), the Manager first asks the user: commit or stash them themselves (recommended), or carry them into the task. Naming: `<type>/<short-kebab-description>`, where `<type>` is a Conventional Commits type (e.g. `feat/user-login`, `chore/sdd-bootstrap`).
 - **Commits:** only the Reviewer commits, on the task branch, after the user's OK closing a phase/task (§4.3). No other agent ever commits.
 - **Commit format:** [Conventional Commits](https://www.conventionalcommits.org/), in English. **No AI co-author trailer** (no `Co-Authored-By` lines for agents; golden rule 10).
 - **Push:** no agent ever pushes. The user pushes.
 - **Merges** to `development` and to `master` are done manually by the user only.
+- **Git guard.** A `PreToolUse` hook enforces the three rules above: `.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`, denies any Bash command that runs `git push` or `git merge`, and any `git commit` outside the Reviewer subagent. The Manager never edits or bypasses it.
 
 ---
 
@@ -346,7 +362,7 @@ Entry format:
 
 `README.md` (repo root) is the project's public face: it is written to be read on the project's GitHub page, by someone who has never seen the project. The Specifier drafts it and keeps it in sync with the docs; no other agent writes it.
 
-- **Derived from the docs.** It describes only what the docs establish and the code implements: never planned work, never anything the docs do not say. It is not a source of truth: if it contradicts the docs, the docs win and the README is fixed. It is not versioned, not listed in `MAIN.md`, and has no CHANGELOG entry.
+- **Derived from the docs.** It describes only what the docs establish and the code implements: never planned work, never anything the docs do not say. The only exception is code pending extraction (§10.4): what the README already says about it is kept as it is until the extraction specifies it. It is not a source of truth: if it contradicts the docs, the docs win and the README is fixed. It is not versioned, not listed in `MAIN.md`, and has no CHANGELOG entry.
 - **No harness internals.** No REQ/AC/PH IDs, spec statuses or versions, and no description of the SDD workflow. It may link to `docs/sdd/MAIN.md` for the full specification.
 - **GitHub format.** GitHub Flavored Markdown. The project name is the only `#` heading, followed by a one-line description. Then, only the sections the docs support, in this order: overview/features, requirements, installation, usage, configuration, development (running the app and the tests), license. Links to repo files are relative; code blocks carry a language tag; images and badges only when the project already has them or the docs define them.
 - **Sync.** At every phase/task close (§4.3, §4.7), the Specifier updates every part of the README the closed work affects, so it matches the docs and what is implemented. If the project has no README yet, the Specifier creates it at the first close where the docs describe something a reader can use. Content that is not specification (e.g. screenshots, badges, credits, contribution notes) is kept as is.
@@ -415,7 +431,8 @@ Arrows, check marks, emojis, agent names and report names are fixed and in Engli
 
 ## 8. Language
 
-- Docs, code comments, identifiers, file names and commit messages: **English**.
+- Code comments, identifiers, file names and commit messages: **English**.
+- Docs (including `README.md`): **English**, unless `CONVENTIONS.md` sets another **Docs language** (decided by the user, e.g. in the migration of an existing project, §10.2). Only the prose changes language: file names, IDs, the template's headings and field names, and the Given/When/Then keywords stay in English.
 - Conversation with the user: the user's language.
 
 ---
@@ -425,6 +442,7 @@ Arrows, check marks, emojis, agent names and report names are fixed and in Engli
 - **`AGENTS.md`** (repo root) holds the common rules, the Manager's rules, the workflow, and a summary of each subagent role.
 - **`.claude/agents/<role>.md`** holds the detailed definition of each subagent role (role, permissions, workflow steps, report format). Role detail lives only there.
 - **`CLAUDE.md`** contains only the import of `AGENTS.md` (`@AGENTS.md`) plus one comment line stating that it holds no guidance of its own.
+- **`.claude/settings.json`** registers the git guard hook (§5) and **`.claude/hooks/sdd-git-guard.sh`** implements it. A project's own settings live in the same file, next to the hook entry.
 - Subagent files never set `tools` or `model`. They set `omitClaudeMd: true`, and their `description` states that they are used only when the Manager explicitly hands off a task in the SDD workflow.
 
 ---
@@ -438,7 +456,7 @@ The harness is installed by the plugin's `init` skill, which only copies files a
 1. The Manager creates `development` if it does not exist (asking the user first, §5), then the task branch `chore/sdd-bootstrap` from `development`.
 2. The Reviewer verifies the installed files against this file (structure and compliance only: the bootstrap has no testable acceptance criteria, so no tests are written; see `.claude/agents/reviewer.md`).
 3. **Stop:** the user approves or requests changes.
-4. The Reviewer commits the harness files on `chore/sdd-bootstrap`.
+4. The Specifier adds the CHANGELOG entry `SDD bootstrap` (§6.5), which marks the bootstrap as done. The Reviewer commits the harness files on `chore/sdd-bootstrap`.
 5. The Manager waits for the user's first input, and does not interview the user about the project until they provide it.
 
 ### 10.2 Existing project
@@ -447,7 +465,7 @@ Everything the project already documents is rewritten in the harness format with
 
 1. The Manager creates `development` if it does not exist (asking the user first, §5), then the task branch `chore/sdd-bootstrap` from `development`.
 2. **Inventory.** Before reading any file, the Specifier lists every file in the repository (`git ls-files --cached --others --exclude-standard`, plus the `.pre-sdd` files) and classifies each one by its path as *document* (READMEs, docs folders, specs from SDD tools such as spec-kit, Kiro or OpenSpec, ADRs, the `.pre-sdd` files), *manifest* (package manifests, build, CI and tool configuration), *code*, *test* or *skipped* (generated, vendored, binary and asset files, lockfiles). It writes the inventory in the migration map, `docs/sdd-migration.md` (step 4), and goes on to step 3 without stopping. Every later read is chosen from the inventory; if the Specifier has to be relaunched (§4.8), the new instance starts from the map instead of listing the repository again.
-3. **Reading and divergences.** The Specifier reads every document and manifest in full, the layout of the tests, and, of the code, only its entry points and the code a document describes (to check it against the document). It does not read the rest of the code. Writing nothing but the migration map, it reports in a Decisions report **only the divergences**: documents that contradict each other, and documents that contradict the code. For a document-vs-code divergence the options include keeping the documented behaviour (the code is fixed in a later task) and documenting what the code does. This loops until no divergence is pending; with no divergences, it goes straight to step 4.
+3. **Reading and divergences.** The Specifier reads every document and manifest in full, the layout of the tests, and, of the code, only its entry points and the code a document describes (to check it against the document). It does not read the rest of the code. Writing nothing but the migration map, it reports in a Decisions report **only the divergences**: documents that contradict each other, and documents that contradict the code. For a document-vs-code divergence the options include keeping the documented behaviour (the code is fixed in a later task) and documenting what the code does. If any original document is written in a language other than English, the same report carries one more decision, the docs language (§8): translate everything to English, or keep that language; the choice is recorded in `CONVENTIONS.md`. This loops until nothing is pending; with nothing pending, it goes straight to step 4.
 4. **Migration.** The Specifier writes, without asking:
    - the spec modules, deciding which modules exist (name and code, §6.1), faithful to the originals, the code it read and the user's divergence decisions, in the harness format (§6.3), registered in `MAIN.md` together with the project overview;
    - for every code directory whose behaviour no document describes: it is assigned to a module (a new one, with the description evident from its structure, if none fits), which gets the open point `Pending extraction: the behaviour implemented in <paths> is not specified yet (AGENTS.md §10.4).` and stays `Draft`;
@@ -469,7 +487,7 @@ The plugin's `update` skill brings the harness files up to the latest version pu
 
 The first Manager session afterwards (recognised because that entry is still uncommitted in the working tree) runs the update as an SDD task, `chore/sdd-update-v<NEW>`. If the bootstrap has not run yet, there is no update task: the bootstrap (`/sdd-harness:bootstrap`) covers the update.
 
-1. The Manager creates the task branch from `development` (the uncommitted changes carry over).
+1. The Manager creates the task branch `chore/sdd-update-v<NEW>` from `development` (the uncommitted changes of the update carry over).
 2. The Reviewer verifies the updated harness files against this file, and every existing doc in `docs/sdd/` against the current rules (§6) and `_TEMPLATE.md` (structure and compliance only, no tests). Every doc that no longer complies, and a `README.md` that does not comply with §6.7, is a spec gap.
 3. Spec gaps go to the Specifier, through the normal flow (§4.1): form adaptations are trivial decisions; anything else is put to the user. The Reviewer checks again (loop).
 4. **Stop:** the user approves or requests changes.
@@ -477,4 +495,4 @@ The first Manager session afterwards (recognised because that entry is still unc
 
 ### 10.4 Pending extraction
 
-A module whose Open points hold a `Pending extraction` item (§10.2 step 4) covers code whose behaviour is implemented but not specified yet. When a task reaches code listed in such an item (its specs or its changes touch that code), the Specifier, in its feasibility check (§4.1), first reads all the code the item lists and extracts its behaviour into the module, under the rules of the migration writing (§10.2 step 4): faithful to what the code does, without asking about each thing, never inventing what the code does not establish, and reporting only divergences with the docs, in the same Decisions report as the task's own decisions. The extracted requirements go in a phase `PH-<CODE>-<n>` titled `Existing behaviour`, with status `Done`, and the item is removed from Open points. The extraction is written together with the task's specs and approved with them at STOP 1; the Docs-written report lists it under the review notes. Code that no task reaches stays pending; the user may also ask for an extraction as a task of its own.
+A module whose Open points hold a `Pending extraction` item (§10.2 step 4) covers code whose behaviour is implemented but not specified yet. When a task reaches code listed in such an item (its specs or its changes touch that code), the Specifier, in its feasibility check (§4.1), first reads all the code the item lists and extracts its behaviour into the module, under the rules of the migration writing (§10.2 step 4): faithful to what the code does, without asking about each thing, never inventing what the code does not establish, and reporting only divergences with the docs, in the same Decisions report as the task's own decisions. The extracted requirements go in a phase `PH-<CODE>-<n>` titled `Existing behaviour`, with status `Done`, and the item is removed from Open points. The extracted requirements whose code the task changes are also listed among the REQ-IDs covered by the task's phase, so the Reviewer tests their acceptance criteria like any other in scope; the rest stay untested until a task changes their code. The extraction is written together with the task's specs and approved with them at STOP 1; the Docs-written report lists it under the review notes. Code that no task reaches stays pending; the user may also ask for an extraction as a task of its own.

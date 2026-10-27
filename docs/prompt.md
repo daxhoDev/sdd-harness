@@ -30,7 +30,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
   - Colors: Specifier `blue`, Implementer `green`, Reviewer `orange`, Researcher `purple`. The frontmatter `color` is the source of truth; the Manager's hand-off emojis (§6) always match it (🔵 🟢 🟠 🟣).
 - `description` states the agent is used **only when the Manager explicitly hands off a task in the SDD workflow** — never auto-delegated.
 - `omitClaudeMd: true` enforces minimal context: each agent file is self-contained (role, permissions, workflow steps, report format), and the agent reads only what it is pointed to.
-- Permissions are enforced **by instructions only** (no hooks).
+- Permissions are enforced **by instructions**, except the git rules: a `PreToolUse` hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks every `git push` and `git merge`, and every `git commit` not run by the Reviewer.
 - Each agent file defines a **fixed report structure**:
   - Specifier: a numbered decision list (context, options, recommendation), or the files written plus reading instructions for the Implementer.
   - Implementer: a list of blocking issues, or the files changed plus notes.
@@ -46,7 +46,8 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Never researches itself (golden rule 8). It may request research while refining the user's input, and it handles research requests from the other agents (§3.1).
 - **Always** asks the user (what and why) before launching any research; if the user declines, puts to the user the question the research was meant to answer.
 - Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it.
-- Creates the task branch from `development` once the user approves the specs, before handing off to the Implementer.
+- Creates the task branch from `development` before the first hand-off of the task, so nothing is ever written on `development` or `master`.
+- Runs one task at a time; in a new session, reads where an open task stands from git and the docs and offers to continue it; drops a task (deleting its branch) only with the user's OK.
 - Runs the environment preflight gate before the first hand-off to the Implementer in each phase; on failure, stops everything and reports the summary to the user (§3.2).
 - Never writes specs, code, tests or docs, and never commits.
 - Its rules live only in `AGENTS.md` (there is no `manager.md`).
@@ -60,7 +61,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - Once the stack is decided, specs the environment preflight script as the first phase of that task (§3.2).
 - Proposes every new `docs/sdd/` file (module or process), and every rename, merge or split, in a Decisions report item (name, code, purpose, reason); the file is created only after the user approves it.
 - When specs are written, gives the Manager precise instructions for the Implementer: which documents must be read, and any additional information to keep in mind.
-- Right after the user approves a spec (before the task branch is created), sets its Status to `Approved` and its version to `v1.0` (or bumps it, for changes to an already approved spec).
+- Right after the user approves a spec (before the next hand-off to the Implementer), sets its Status to `Approved` and its version to `v1.0` (or bumps it, for changes to an already approved spec).
 - When a phase closes (after the user's OK, before the commit), sets the phase to `Done`, bumps the spec version if needed (updating the spec's row in `MAIN.md`), adds the CHANGELOG entry, and brings `README.md` in sync (§5.6).
 - Drafts the project's `README.md` and keeps it in sync with the docs (§5.6).
 - Permissions: writes **only** inside `docs/`, plus `README.md` and the process files `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — **nothing else, ever**, except deleting the originals approved for deletion in the existing project migration (§9). Never writes code or tests.
@@ -101,6 +102,9 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
+         Manager creates task branch from `development`
+            │
+            ▼
          Specifier (feasibility check)
             │  doubts/contradictions/decisions? ──► Manager ──► User ──► back to Specifier (loop)
             ▼
@@ -111,9 +115,6 @@ User ──► Manager (refine: questions to the user, one at a time)
             │
             ▼
          Specifier: spec → Approved, v1.0 (or version bump)
-            │
-            ▼
-         Manager creates task branch from `development`
             │
             ▼
          Manager runs the preflight gate, each phase (§3.2) ── fails? ──► everything stops, Manager ──► User
@@ -197,11 +198,11 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 
 ## 4. Git
 
-- One branch per task, created by the Manager from `development`.
+- One branch per task, created by the Manager from `development` before the task's first hand-off.
 - Branch naming: `<type>/<short-kebab-description>`, with the type from Conventional Commits (e.g. `feat/user-auth`, `chore/sdd-bootstrap`).
 - Commits: made **only** by the Reviewer, after the user's OK closing a phase/task.
 - Commit format: **Conventional Commits**, in English, **with no AI co-author trailer** (golden rule 10).
-- **No agent ever pushes.** The user pushes.
+- **No agent ever pushes.** The user pushes. A hook blocks `git push`, `git merge` and any commit outside the Reviewer.
 - Merges to `development` and to `master` are done **manually by the user only**.
 - If `development` does not exist yet, the Manager asks the user before creating it.
 
@@ -285,7 +286,8 @@ Every deviation is also propagated to all affected docs so that no document cont
 
 ## 7. Language
 
-- Docs, code comments, identifiers, file names and commit messages: **English**.
+- Code comments, identifiers, file names and commit messages: **English**.
+- Docs: **English**, unless `CONVENTIONS.md` sets another docs language (asked in the existing project migration when the originals are not in English); file names, IDs, template headings and Given/When/Then stay in English.
 - Conversation with the user: the user's language.
 
 ---

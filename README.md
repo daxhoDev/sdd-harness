@@ -16,14 +16,16 @@ Docs are the single source of truth, and agents never make decisions on their ow
 
 Every task follows the same loop:
 
-1. You describe the task; the Manager asks questions, one at a time and with options, until it is clear.
+1. You describe the task; the Manager asks questions, one at a time and with options, until it is clear, and creates a task branch from `development`, so nothing is ever written on `development` or `master`.
 2. The Specifier checks it against the docs and the code, brings you every pending decision with a recommended option, and then writes the specs (requirements, acceptance criteria and implementation phases) in `docs/sdd/`.
-3. **Stop 1:** you approve the specs or ask for changes. The Manager then creates a task branch from `development`.
+3. **Stop 1:** you approve the specs or ask for changes.
 4. The Implementer builds what the specs say, and reports anything that does not fit before writing code.
 5. The Reviewer writes and runs tests derived from the acceptance criteria and checks compliance; gaps loop back to the Implementer, and spec errors come back to you.
 6. **Stop 2:** you give the OK to close the phase. The Specifier closes it in the docs (CHANGELOG, versions, `README.md`) and the Reviewer commits.
 
-Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. To save tokens, each subagent is reused across the hand-offs of a phase (it gets only what is new and re-reads only what others changed), and every new phase or task starts with fresh ones. No agent ever pushes or merges; that stays with you. Nothing the agents write (commits, PRs, docs, code) carries an AI co-author or attribution mark.
+One task runs at a time. If you close Claude Code mid-task, the next session reads where the task stood from git and the docs and offers to continue from there; you can also drop a task, which deletes its branch after your OK.
+
+Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. To save tokens, each subagent is reused across the hand-offs of a phase (it gets only what is new and re-reads only what others changed), and every new phase or task starts with fresh ones. No agent ever pushes or merges; that stays with you. A git hook enforces it: it blocks every `git push` and `git merge`, and every commit not made by the Reviewer. Nothing the agents write (commits, PRs, docs, code) carries an AI co-author or attribution mark.
 
 ## Install
 
@@ -74,9 +76,10 @@ The skill only copies files:
 - `AGENTS.md`
 - `CLAUDE.md`
 - `.claude/agents/{specifier,implementer,reviewer,researcher}.md`
+- `.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json` (an existing `settings.json` is kept and only gets the hook entry added)
 - `docs/sdd/` (`MAIN.md`, `CONVENTIONS.md`, `CHANGELOG.md`, `DEVIATIONS.md`, `_TEMPLATE.md`)
 
-It welcomes you and asks one question: new project or existing project. If you choose "new" but the project already has docs or code, it tells you and treats it as existing, so nothing you have is lost. It creates no branches and makes no commits, and asks about git only if the project is not a repository or has no commits. A file it would replace (e.g. an existing `CLAUDE.md`) is renamed to `<file>.pre-sdd` instead of being overwritten.
+It welcomes you and asks one question: new project or existing project. If you choose "new" but the project already has docs or code, it tells you and treats it as existing, so nothing you have is lost. It creates no branches and makes no commits, and asks about git only if the project is not a repository or has no commits. A file it would replace (e.g. an existing `CLAUDE.md`) is renamed to `<file>.pre-sdd` instead of being overwritten. If the harness is already installed, it does nothing and points you to `update`.
 
 Then restart Claude Code in the project (the subagents and `AGENTS.md` load only in a new session) and start the bootstrap, the first SDD task (`chore/sdd-bootstrap`):
 
@@ -84,7 +87,7 @@ Then restart Claude Code in the project (the subagents and `AGENTS.md` load only
 /sdd-harness:bootstrap
 ```
 
-Until the bootstrap has run, the Manager starts no other task. In a new project it commits the harness files after your OK. In an existing project the Specifier first takes an inventory of the repository, then reads every document (docs, specs from tools such as spec-kit, Kiro or OpenSpec) and the code those documents describe, and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Code that no document describes is not specified up front: its module is marked as pending extraction, and the Specifier writes its specs the first time a task touches that code, approved with the task's own specs. The Reviewer checks that nothing was lost through a migration map that links every section of every original to where its content went. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
+Until the bootstrap has run, the Manager starts no other task. In a new project it commits the harness files after your OK. In an existing project the Specifier first takes an inventory of the repository, then reads every document (docs, specs from tools such as spec-kit, Kiro or OpenSpec) and the code those documents describe, and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code) and, if your docs are not in English, whether to translate them or keep their language; everything is committed after a single approval of the result. Code that no document describes is not specified up front: its module is marked as pending extraction, and the Specifier writes its specs the first time a task touches that code, approved with the task's own specs. The Reviewer checks that nothing was lost through a migration map that links every section of every original to where its content went. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
 
 ### Your project's README
 
@@ -126,6 +129,8 @@ skills/
 │   └── adapters/
 │       └── claude-code/      # Claude Code adapter
 │           ├── CLAUDE.md
+│           ├── settings.json            # registers the git guard hook
+│           ├── hooks/sdd-git-guard.sh
 │           └── agents/<role>.frontmatter.md
 ├── bootstrap/
 │   └── SKILL.md              # starts the bootstrap task
