@@ -25,7 +25,7 @@ Every task follows the same loop:
 
 One task runs at a time. If you close Claude Code mid-task, the next session reads where the task stood from git and the docs and offers to continue from there; you can also drop a task, which deletes its branch after your OK.
 
-Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. To save tokens, each subagent is reused across the hand-offs of a phase (it gets only what is new and re-reads only what others changed), and every new phase or task starts with fresh ones. No agent ever pushes or merges; that stays with you. A git hook enforces it: it blocks every `git push` and `git merge`, and every commit not made by the Reviewer. Nothing the agents write (commits, PRs, docs, code) carries an AI co-author or attribution mark.
+Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. To save tokens, each subagent is reused across the hand-offs of a phase (it gets only what is new and re-reads only what others changed), and every new phase or task starts with fresh ones. No subagent ever pushes or merges: that stays with you, or with the Manager when you ask it to. A git hook enforces it: it blocks `git push` and `git merge` from subagents, asks for your approval when the Manager runs them, and blocks every commit not made by the Reviewer. Nothing the agents write (commits, PRs, docs, code) carries an AI co-author or attribution mark.
 
 ## Install
 

@@ -19,7 +19,7 @@ This file holds the common rules, the Manager's rules, the workflow, and a summa
 9. **The harness never works on a broken environment.** Once the environment preflight script exists, the Manager runs it before any implementation work starts, and a failing result stops everything until it passes (§4.6).
 10. **No AI attribution.** Nothing an agent writes carries a co-authorship or AI attribution mark: no `Co-Authored-By` lines for agents, no "Generated with…" footers or similar. This covers commit messages, pull request descriptions, tags and release notes, docs, `README.md`, code, comments and tests.
 
-Permissions in this harness are enforced **by instructions**, with one exception: a hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks every `git push` and `git merge`, and every `git commit` not run by the Reviewer (§5). Every other permission has no hook or tool restriction behind it: every agent is responsible for staying strictly within its own permissions.
+Permissions in this harness are enforced **by instructions**, with one exception: a hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks every `git push` and `git merge` run by a subagent, asks the user to approve one run by the Manager, and blocks every `git commit` not run by the Reviewer (§5). Every other permission has no hook or tool restriction behind it: every agent is responsible for staying strictly within its own permissions.
 
 ---
 
@@ -48,7 +48,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 - If the user declines a research request, puts to the user the question the research was meant to answer (one at a time, with options) and passes the user's answer to the requesting agent when re-launching it (§4.5).
 - Shows the user a summary of every Researcher report and relays the full report only to the agent that requested it (§4.5).
 - Recommends running a task as `sdd: false` when it looks trivial, and alerts the user when a task marked `sdd: false` looks like it deserves the full flow; the user decides (§4.7).
-- Never writes or commits anything: no specs, docs, code or tests. Only the Reviewer commits (§5).
+- Never writes or commits anything: no specs, docs, code or tests. Only the Reviewer commits (§5). Pushes or merges only when the user explicitly asks for it (§5).
 
 ### 2.2 Specifier — summary
 
@@ -268,14 +268,15 @@ A task is **open** from the creation of its branch until its last phase is commi
 ## 5. Git
 
 - **Branches**
-  - `master`: merged into manually, by the user only.
-  - `development`: created from `master`. If it does not exist, the Manager asks the user before creating it. Merged into manually, by the user only.
+  - `master`: merged into by the user, or by the Manager on the user's explicit request (below).
+  - `development`: created from `master`. If it does not exist, the Manager asks the user before creating it. Merged into by the user, or by the Manager on the user's explicit request (below).
   - **Task branches**: one per task, created by the Manager from `development` before the first hand-off of the task, so specs are written on the task branch too. If the working tree has uncommitted changes the task did not make (the files written by a harness install or update belong to the bootstrap or update task), the Manager first asks the user: commit or stash them themselves (recommended), or carry them into the task. Naming: `<type>/<short-kebab-description>`, where `<type>` is a Conventional Commits type (e.g. `feat/user-login`, `chore/sdd-bootstrap`).
 - **Commits:** only the Reviewer commits, on the task branch, after the user's OK closing a phase/task (§4.3). No other agent ever commits.
 - **Commit format:** [Conventional Commits](https://www.conventionalcommits.org/), in English. **No AI co-author trailer** (no `Co-Authored-By` lines for agents; golden rule 10).
-- **Push:** no agent ever pushes. The user pushes.
-- **Merges** to `development` and to `master` are done manually by the user only.
-- **Git guard.** A `PreToolUse` hook enforces the three rules above: `.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`, denies any Bash command that runs `git push` or `git merge`, and any `git commit` outside the Reviewer subagent. The Manager never edits or bypasses it.
+- **Push:** no subagent ever pushes. The user pushes, or asks the Manager to.
+- **Merges** to `development` and to `master` are done by the user, or by the Manager when the user asks for it. No subagent ever merges.
+- **The Manager pushes or merges only when the user explicitly asks** in that message, never on its own initiative or as part of a workflow step; the user also approves the command itself when the git guard asks.
+- **Git guard.** A `PreToolUse` hook enforces the three rules above: `.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`, denies any Bash command that runs `git push` or `git merge` from a subagent, asks the user to approve it when the Manager runs it, and denies any `git commit` outside the Reviewer subagent. The Manager never edits or bypasses it.
 
 ---
 

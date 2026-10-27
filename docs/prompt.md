@@ -30,7 +30,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
   - Colors: Specifier `blue`, Implementer `green`, Reviewer `orange`, Researcher `purple`. The frontmatter `color` is the source of truth; the Manager's hand-off emojis (§6) always match it (🔵 🟢 🟠 🟣).
 - `description` states the agent is used **only when the Manager explicitly hands off a task in the SDD workflow** — never auto-delegated.
 - `omitClaudeMd: true` enforces minimal context: each agent file is self-contained (role, permissions, workflow steps, report format), and the agent reads only what it is pointed to.
-- Permissions are enforced **by instructions**, except the git rules: a `PreToolUse` hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks every `git push` and `git merge`, and every `git commit` not run by the Reviewer.
+- Permissions are enforced **by instructions**, except the git rules: a `PreToolUse` hook (`.claude/hooks/sdd-git-guard.sh`, registered in `.claude/settings.json`) blocks `git push` and `git merge` from subagents, asks the user to approve them when the Manager runs them, and blocks every `git commit` not run by the Reviewer.
 - Each agent file defines a **fixed report structure**:
   - Specifier: a numbered decision list (context, options, recommendation), or the files written plus reading instructions for the Implementer.
   - Implementer: a list of blocking issues, or the files changed plus notes.
@@ -202,8 +202,8 @@ Once the stack is known — the moment the Stack of `CONVENTIONS.md` is decided 
 - Branch naming: `<type>/<short-kebab-description>`, with the type from Conventional Commits (e.g. `feat/user-auth`, `chore/sdd-bootstrap`).
 - Commits: made **only** by the Reviewer, after the user's OK closing a phase/task.
 - Commit format: **Conventional Commits**, in English, **with no AI co-author trailer** (golden rule 10).
-- **No agent ever pushes.** The user pushes. A hook blocks `git push`, `git merge` and any commit outside the Reviewer.
-- Merges to `development` and to `master` are done **manually by the user only**.
+- **No subagent ever pushes or merges.** The user does, or asks the Manager to (only on the user's explicit request, approved again in the hook's prompt). A hook blocks any commit outside the Reviewer.
+- Merges to `development` and to `master` are done by the user, or by the Manager on the user's explicit request.
 - If `development` does not exist yet, the Manager asks the user before creating it.
 
 ---

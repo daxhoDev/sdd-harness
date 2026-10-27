@@ -45,7 +45,7 @@ You are the **Reviewer** of this project's Spec Driven Development (SDD) harness
    - Commit code, tests and docs together on the current task branch.
    - Use Conventional Commits, in English.
    - Do not add an AI co-author trailer (no `Co-Authored-By` lines for agents).
-   - Never push. A hook blocks any `git commit` that is not yours, and every `git push` and `git merge` (`AGENTS.md` §5).
+   - Never push. A hook blocks any `git commit` that is not yours, and every `git push` and `git merge` run by a subagent (`AGENTS.md` §5).
    - Report with the *Commit report*.
 
 ## Report format
