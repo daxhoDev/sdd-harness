@@ -1,16 +1,29 @@
 # sdd-harness
 
-A Claude Code plugin that installs a **Spec Driven Development (SDD)** harness into any project, through the manual-only skill `init`.
+A Claude Code plugin that installs a **Spec Driven Development (SDD)** harness into any project. It ships three manual-only commands: `init` installs the harness, `bootstrap` runs its first task, and `update` brings an installed harness to the latest version.
 
 The harness defines five roles:
 
 - **Manager** — the main session; the only one that talks to the user.
-- **Specifier** — checks feasibility, raises every decision to the user, and writes all documentation.
+- **Specifier** — checks feasibility, raises every decision to the user, and writes all documentation, including your project's `README.md`.
 - **Implementer** — implements exactly what is documented.
 - **Reviewer** — writes and runs tests from acceptance criteria, reviews compliance, and commits after the user's OK.
 - **Researcher** — the only role that searches the internet or consults external APIs, only when needed and after the user's approval; returns a sourced report and writes no files.
 
 Docs are the single source of truth, and agents never make decisions on their own. The full rules are in [`docs/prompt.md`](docs/prompt.md) and in the installed `AGENTS.md`.
+
+## How it works
+
+Every task follows the same loop:
+
+1. You describe the task; the Manager asks questions, one at a time and with options, until it is clear.
+2. The Specifier checks it against the docs and the code, brings you every pending decision with a recommended option, and then writes the specs (requirements, acceptance criteria and implementation phases) in `docs/sdd/`.
+3. **Stop 1:** you approve the specs or ask for changes. The Manager then creates a task branch from `development`.
+4. The Implementer builds what the specs say, and reports anything that does not fit before writing code.
+5. The Reviewer writes and runs tests derived from the acceptance criteria and checks compliance; gaps loop back to the Implementer, and spec errors come back to you.
+6. **Stop 2:** you give the OK to close the phase. The Specifier closes it in the docs (CHANGELOG, versions, `README.md`) and the Reviewer commits.
+
+Once the stack is decided, the harness also gets an environment preflight script: before each phase the Manager runs it, and nothing is implemented while the runtime is missing or the tests fail. No agent ever pushes or merges; that stays with you.
 
 ## Install
 
@@ -72,6 +85,12 @@ Then restart Claude Code in the project (the subagents and `AGENTS.md` load only
 ```
 
 Until the bootstrap has run, the Manager starts no other task. In a new project it commits the harness files after your OK. In an existing project the Specifier first reads the whole repository (docs, specs from tools such as spec-kit, Kiro or OpenSpec, and the code) and rewrites everything in the harness format, keeping all the information you already had. It asks you only about divergences (docs that contradict each other or the code); everything is committed after a single approval of the result. Originals whose content was migrated are deleted at the close (they remain in the git history); files like `README.md` or `LICENSE` are never deleted.
+
+### Your project's README
+
+The Specifier also drafts your project's `README.md` and keeps it in sync with the docs. It is written for your repository's GitHub page: the project name and a one-line description, then only the sections the docs support (features, requirements, installation, usage, configuration, development, license). It describes only what is documented and implemented, never planned work, and carries no harness internals (requirement IDs, spec versions, the SDD workflow). It is updated at the close of every phase or task, so each commit ships a README that matches the code. Screenshots, badges, credits and other content that is not specification are kept as you wrote them.
+
+In an existing project the bootstrap brings your current README in line with these rules, keeping all of its information; if there is none, the Specifier creates one. After a harness update, a README that does not follow them is fixed in the update task.
 
 ### Lightweight tasks
 

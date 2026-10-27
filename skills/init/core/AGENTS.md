@@ -49,7 +49,7 @@ There are five agents. The **Manager** is the main session (subagents cannot tal
 
 ### 2.2 Specifier — summary
 
-Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Specs the environment preflight script once the stack is decided (§4.6). Writes **only** inside `docs/`, plus `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever, except deleting the originals approved for deletion in the existing project migration (§10.2). Never writes code or tests.
+Checks feasibility, reports every doubt or decision with options, writes and updates all documentation once nothing is pending, breaks large tasks into phases, and gives the Manager reading instructions for the Implementer. Proposes every new file in `docs/sdd/` for the user's approval (§6.1). Specs the environment preflight script once the stack is decided (§4.6). Drafts the project's `README.md` and keeps it in sync with the docs (§6.7). Writes **only** inside `docs/`, plus `README.md`, `AGENTS.md`, `CLAUDE.md` and `.claude/agents/` — nothing else, ever, except deleting the originals approved for deletion in the existing project migration (§10.2). Never writes code or tests.
 Full definition: [`.claude/agents/specifier.md`](.claude/agents/specifier.md).
 
 ### 2.3 Implementer — summary
@@ -137,7 +137,7 @@ Right after the user approves the specs (STOP 1, or any later approval of a spec
 
 After the user's OK at STOP 2 and **before** the commit:
 
-1. The Manager sends the Specifier to set the phase status to `Done`, bump the spec version if needed, and add the CHANGELOG entry.
+1. The Manager sends the Specifier to set the phase status to `Done`, bump the spec version if needed, add the CHANGELOG entry, and bring `README.md` in sync (§6.7).
 2. The Reviewer commits code, tests and docs together on the task branch.
 
 ### 4.4 Blocking issues
@@ -234,7 +234,7 @@ A task the user marks `sdd: false` skips the full flow. It is meant for trivial 
 3. The Implementer implements what the Manager's order says, together with any docs it is pointed to.
 4. The Reviewer reviews (and runs or writes tests) only if the Manager judges it necessary (e.g. the change may break existing tests).
 5. **Stop:** the Manager shows the user the result (files changed and, if any, docs changed) and the user gives the OK or requests changes.
-6. **Close.** If docs changed, the Specifier records their approval (§4.2) and adds the CHANGELOG entries (§6.5, with the task in place of the phase); otherwise there is no CHANGELOG entry. The Reviewer commits on the task branch.
+6. **Close.** If docs changed, the Specifier records their approval (§4.2), adds the CHANGELOG entries (§6.5, with the task in place of the phase) and brings `README.md` in sync (§6.7); otherwise there is no CHANGELOG entry and the README is untouched. The Reviewer commits on the task branch.
 
 ---
 
@@ -329,6 +329,16 @@ Entry format:
 - **Affected files:** <list>
 - **CHANGELOG ref:** <entry reference>
 ```
+
+### 6.7 README.md
+
+`README.md` (repo root) is the project's public face: it is written to be read on the project's GitHub page, by someone who has never seen the project. The Specifier drafts it and keeps it in sync with the docs; no other agent writes it.
+
+- **Derived from the docs.** It describes only what the docs establish and the code implements: never planned work, never anything the docs do not say. It is not a source of truth: if it contradicts the docs, the docs win and the README is fixed. It is not versioned, not listed in `MAIN.md`, and has no CHANGELOG entry.
+- **No harness internals.** No REQ/AC/PH IDs, spec statuses or versions, and no description of the SDD workflow. It may link to `docs/sdd/MAIN.md` for the full specification.
+- **GitHub format.** GitHub Flavored Markdown. The project name is the only `#` heading, followed by a one-line description. Then, only the sections the docs support, in this order: overview/features, requirements, installation, usage, configuration, development (running the app and the tests), license. Links to repo files are relative; code blocks carry a language tag; images and badges only when the project already has them or the docs define them.
+- **Sync.** At every phase/task close (§4.3, §4.7), the Specifier updates every part of the README the closed work affects, so it matches the docs and what is implemented. If the project has no README yet, the Specifier creates it at the first close where the docs describe something a reader can use. Content that is not specification (e.g. screenshots, badges, credits, contribution notes) is kept as is.
+- **Decisions.** The content follows from the docs, so writing the README is a form decision (trivial, golden rule 2). Anything that would need a new decision (e.g. a licence the docs do not state) is never invented: it is left out of the README and raised in the Specifier's next report.
 
 ---
 
@@ -429,7 +439,8 @@ Everything the project already holds is rewritten in the harness format without 
    - the spec modules, deciding which modules exist (name and code, §6.1), faithful to the originals, the code and the user's divergence decisions, in the harness format (§6.3), registered in `MAIN.md` together with the project overview;
    - the `CONVENTIONS.md` sections the docs and the code establish (e.g. Stack, Project structure, Testing);
    - the phases: requirements the code already implements go in `PH-<CODE>-1` (status `In review`); requirements not implemented yet, or whose code the user decided to fix, go in `PH-<CODE>-2` (status `Planned`);
-   - what neither the docs nor the code establish (e.g. missing acceptance criteria) is never invented: it goes in the module's Open points, and the module stays `Draft`.
+   - what neither the docs nor the code establish (e.g. missing acceptance criteria) is never invented: it goes in the module's Open points, and the module stays `Draft`;
+   - `README.md`, brought in line with §6.7 and with the migrated docs, describing what the code implements and keeping all of its existing information (created if the project has none).
 
    The originals to delete at the close are the `.pre-sdd` files and the documents whose only purpose was specification or design, once all their content is migrated. Files that serve the project beyond the harness (e.g. `README.md`, `LICENSE`, `CONTRIBUTING.md`, a product changelog, code comments) are read but never deleted. The Specifier reports with a Docs-written report listing every new file, every original to delete and every open point.
 4. **Review.** The Reviewer verifies the installed harness files and the migrated docs against this file (structure and compliance only, no tests), and checks that all the content of every original to delete is present in the migrated docs. Missing content is a spec gap: it goes back to the Specifier (step 3).
@@ -444,7 +455,7 @@ The plugin's `update` skill brings the harness files up to the latest version pu
 The first Manager session afterwards (recognised because that entry is still uncommitted in the working tree) runs the update as an SDD task, `chore/sdd-update-v<NEW>`. If the bootstrap has not run yet, there is no update task: the bootstrap (`/sdd-harness:bootstrap`) covers the update.
 
 1. The Manager creates the task branch from `development` (the uncommitted changes carry over).
-2. The Reviewer verifies the updated harness files against this file, and every existing doc in `docs/sdd/` against the current rules (§6) and `_TEMPLATE.md` (structure and compliance only, no tests). Every doc that no longer complies is a spec gap.
+2. The Reviewer verifies the updated harness files against this file, and every existing doc in `docs/sdd/` against the current rules (§6) and `_TEMPLATE.md` (structure and compliance only, no tests). Every doc that no longer complies, and a `README.md` that does not comply with §6.7, is a spec gap.
 3. Spec gaps go to the Specifier, through the normal flow (§4.1): form adaptations are trivial decisions; anything else is put to the user. The Reviewer checks again (loop).
 4. **Stop:** the user approves or requests changes.
 5. The Reviewer commits everything on the task branch. Then the Manager waits for the user's next input.

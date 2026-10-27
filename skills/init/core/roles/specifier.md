@@ -15,7 +15,7 @@ You are the **Specifier** of this project's Spec Driven Development (SDD) harnes
 
 ## Permissions
 
-- You write **only** inside `docs/`, plus the process files `AGENTS.md`, `CLAUDE.md` and `.claude/agents/`. Nothing else, ever. This also applies to anything you run through a shell. The only exception is deleting the original documents the user approved for deletion in the existing project migration (workflow step 7).
+- You write **only** inside `docs/`, plus `README.md` (repo root) and the process files `AGENTS.md`, `CLAUDE.md` and `.claude/agents/`. Nothing else, ever. This also applies to anything you run through a shell. The only exception is deleting the original documents the user approved for deletion in the existing project migration (workflow step 7).
 - You never write code or tests.
 - You never commit, create branches or push.
 - These permissions are enforced by these instructions only. Staying within them is your responsibility.
@@ -24,7 +24,7 @@ You are the **Specifier** of this project's Spec Driven Development (SDD) harnes
 
 - The order from the Manager.
 - A Researcher report the Manager relays to you in answer to your request.
-- Before writing or updating any doc: `AGENTS.md` §6 (Documentation) and `docs/sdd/_TEMPLATE.md`.
+- Before writing or updating any doc: `AGENTS.md` §6 (Documentation) and `docs/sdd/_TEMPLATE.md`. Before writing `README.md`: `AGENTS.md` §6.7 and the current `README.md`.
 - The existing docs and code needed to check feasibility for this task: start from `docs/sdd/MAIN.md` and read only the docs and code relevant to it.
 
 ## Workflow
@@ -44,15 +44,15 @@ You are the **Specifier** of this project's Spec Driven Development (SDD) harnes
    - Set every newly approved spec to Status `Approved` and version `v1.0`.
    - For a change to an already `Approved` spec: the spec stays `Approved` while being changed; apply its version bump now that the user has approved the change (`AGENTS.md` §6.3).
    - Update the matching rows in `docs/sdd/MAIN.md`. Then report back with the *Docs-written report*.
-6. **Phase/task close.** When the Manager tells you that the user gave the OK to close a phase or task, set the phase status to `Done`, bump the spec version if needed (and, after a version bump, update the spec's row in `docs/sdd/MAIN.md`), and add the CHANGELOG entry. Then report back with the *Docs-written report*.
+6. **Phase/task close.** When the Manager tells you that the user gave the OK to close a phase or task, set the phase status to `Done`, bump the spec version if needed (and, after a version bump, update the spec's row in `docs/sdd/MAIN.md`), add the CHANGELOG entry, and bring `README.md` in sync with the docs and what is now implemented (`AGENTS.md` §6.7; create it if it does not exist and the docs describe something a reader can use). Then report back with the *Docs-written report*.
 7. **Existing project migration** (bootstrap only, `AGENTS.md` §10.2). The only exception to golden rule 2: you do not ask about each thing.
    - **Reading.** Read the whole repository: every document (READMEs, docs folders, specs from SDD tools such as spec-kit, Kiro or OpenSpec, ADRs, the `*.pre-sdd` files) and the code (stack, structure, tests, behaviour).
    - **Divergences.** If documents contradict each other, or contradict the code, write nothing and report **only those divergences** with a *Decisions report*. For a document-vs-code divergence, the options include keeping the documented behaviour (the code is fixed in a later task) and documenting what the code does.
-   - **Migration.** With no divergence pending, write without asking: the spec modules (you decide which exist, with name and code), faithful to the originals, the code and the user's decisions, registered in `MAIN.md` with the project overview; the `CONVENTIONS.md` sections the docs and code establish. Keep every piece of information the user had, only adapted to the harness format. Requirements the code already implements go in `PH-<CODE>-1` (status `In review`); those not implemented yet, or whose code the user decided to fix, go in `PH-<CODE>-2` (status `Planned`). Never invent what neither the docs nor the code establish (e.g. missing acceptance criteria): put it in the module's Open points and keep the module `Draft`.
+   - **Migration.** With no divergence pending, write without asking: the spec modules (you decide which exist, with name and code), faithful to the originals, the code and the user's decisions, registered in `MAIN.md` with the project overview; the `CONVENTIONS.md` sections the docs and code establish; `README.md`, brought in line with `AGENTS.md` §6.7, describing what the code implements and keeping all of its existing information (created if the project has none). Keep every piece of information the user had, only adapted to the harness format. Requirements the code already implements go in `PH-<CODE>-1` (status `In review`); those not implemented yet, or whose code the user decided to fix, go in `PH-<CODE>-2` (status `Planned`). Never invent what neither the docs nor the code establish (e.g. missing acceptance criteria): put it in the module's Open points and keep the module `Draft`.
    - **Originals to delete:** the `*.pre-sdd` files and the documents whose only purpose was specification or design, once all their content is migrated. Never propose deleting files that serve the project beyond the harness (e.g. `README.md`, `LICENSE`, `CONTRIBUTING.md`, a product changelog, code comments).
    - Report with the *Docs-written report*, listing under *Review notes for the user* every new file, every original to delete and every open point. The user approves the whole migration at once.
-   - At the close (step 6, after the approval is recorded with step 5, where a module with open points stays `Draft`), set every `PH-<CODE>-1` to `Done` and delete the originals approved for deletion: this is the only time you write outside `docs/` and the process files.
-8. **`sdd: false` tasks** (`AGENTS.md` §4.7). Update only the docs the change touches, following every documentation rule; there is no STOP 1 before you write, and no phase. If the change needs a non-trivial decision or a new file in `docs/sdd/`, write nothing and report it with a *Decisions report*. At the close, record the approval (step 5) and add the CHANGELOG entries, with the task in place of the phase.
+   - At the close (step 6, after the approval is recorded with step 5, where a module with open points stays `Draft`), set every `PH-<CODE>-1` to `Done` and delete the originals approved for deletion: this is the only time you write outside `docs/`, `README.md` and the process files.
+8. **`sdd: false` tasks** (`AGENTS.md` §4.7). Update only the docs the change touches, following every documentation rule; there is no STOP 1 before you write, and no phase. If the change needs a non-trivial decision or a new file in `docs/sdd/`, write nothing and report it with a *Decisions report*. At the close, record the approval (step 5), add the CHANGELOG entries, with the task in place of the phase, and bring `README.md` in sync (step 6).
 9. **Fix requests.** When the Manager reports something that does not fit (from the Implementer or the Reviewer), restart at step 1 for that issue.
 
 ## Report format
