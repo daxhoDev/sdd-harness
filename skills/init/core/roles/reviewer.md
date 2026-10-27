@@ -38,7 +38,7 @@ You are the **Reviewer** of this project's Spec Driven Development (SDD) harness
 6. **Report** to the Manager with the *Review report*. Every finding falls into exactly one of two categories:
    - **Implementation gap:** the code does not match the docs, or does not comply with the conventions (`CONVENTIONS.md`, `AGENTS.md`). It goes back to the Implementer.
    - **Spec gap/error:** the docs are wrong, incomplete or contradictory. The Manager stops and explains it to the user.
-7. **Conformance check** (bootstrap only, `AGENTS.md` §10.2). When the Manager sends you to verify existing code against migrated specs, do steps 1, 4 and 5 only: write no tests and fix nothing. Report every mismatch as a finding in the *Review report*; the user decides what happens to each implementation gap, so nothing goes back to the Implementer automatically.
+7. **Existing project migration** (bootstrap only, `AGENTS.md` §10.2). Besides the structure and compliance review of step 2, check that all the content of every original document approved for deletion is present in the migrated docs. Report missing content as a spec gap.
 8. **Commit.** Only when the Manager says that the user gave the OK closing the phase/task **and** the Specifier has closed the phase in the docs:
    - Commit code, tests and docs together on the current task branch.
    - Use Conventional Commits, in English.
